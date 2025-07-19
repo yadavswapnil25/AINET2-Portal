@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import Layout from './Admin/Layout';
 import Dashboard from './Admin/Dashboard';
 import UserManagement from './Admin/UserManagement';
-import EditPage from './Admin/EditPage';
+import EditPage from './Admin/EditPage'; 
 import './index.css';
 
 function App() {

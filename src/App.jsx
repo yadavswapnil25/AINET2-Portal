@@ -6,6 +6,12 @@ import Dashboard from './Admin/Dashboard';
 import UserManagement from './Admin/UserManagement';
 import EditPage from './Admin/EditPage'; 
 import './index.css';
+import Highlights from './Admin/Home/Highlights';
+import Events from './Admin/Home/Events';
+import Partners from './Admin/Home/Partners';
+import Gallery from './Admin/Home/Gallery';
+import Archives from './Admin/Home/Archives';
+import News from './Admin/About/News';
 
 function App() {
   return (
@@ -40,6 +46,12 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="edit/:id" element={<EditPage />} />
+            <Route path="/admin/highlights" element={<Highlights/>} />
+            <Route path="/admin/events" element={<Events/>} />
+            <Route path="/admin/partners" element={<Partners/>} />
+            <Route path="/admin/gallery" element={<Gallery/>} />
+            <Route path="/admin/archives" element={<Archives/>} />
+            <Route path="/admin/news" element={<News/>} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
           <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />

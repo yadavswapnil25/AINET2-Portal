@@ -5,7 +5,10 @@ import {
   Settings, 
   LayoutDashboard,
   X,
-  LogOut
+  LogOut,
+  Newspaper,
+  GraduationCap,
+  Calendar
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -14,7 +17,10 @@ const Sidebar = ({ isOpen, onClose }) => {
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: Users, label: 'User Management', path: '/admin/users' },
-    { icon: Settings, label: 'Settings', path: '/admin/settings' }
+    { icon: Settings, label: 'Settings', path: '/admin/settings' },
+    { icon: Newspaper, label: 'Publications', path: '/admin/publications' },
+    { icon: GraduationCap, label: 'FDLectures', path: '/admin/fdlectures' },
+    { icon: Calendar, label: 'Conferences', path: '/admin/conferences' }
   ];
 
   return (
@@ -71,7 +77,16 @@ const Sidebar = ({ isOpen, onClose }) => {
         </nav>
 
         <div className="absolute bottom-0 w-full border-t border-slate-700 p-4">
-          <button className="flex items-center text-slate-300 hover:text-white text-sm font-medium w-full">
+          <button 
+            onClick={() => {
+              // Clear any stored authentication data
+              localStorage.removeItem('adminToken');
+              localStorage.removeItem('adminUser');
+              // Redirect to login page
+              window.location.href = '/admin/login';
+            }}
+            className="flex items-center text-slate-300 hover:text-white text-sm font-medium w-full hover:bg-slate-700 p-2 rounded transition-colors"
+          >
             <LogOut size={18} className="mr-3" />
             Logout
           </button>

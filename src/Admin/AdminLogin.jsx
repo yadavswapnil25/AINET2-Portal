@@ -1,11 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { baseUrl } from "../../../src/utils/constant";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-
-import { useAuth } from "../../../src/context/AuthContext";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
-import Loader from "../../../src/Components/shared/Loader";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 
 const REMEMBER_EMAIL_KEY = "rememberedEmail";
 const REMEMBER_EMAIL_EXPIRY_KEY = "rememberedEmailExpiry";
@@ -19,37 +14,19 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const token = localStorage.getItem("ainetToken");
-    // Check if we're not already on the login page due to a redirect
-    const isRedirected = new URLSearchParams(window.location.search).get('from') === 'profile';
-
-    if (token && !isRedirected) {
-      // Set loading state to true to show loading indicator
-      setLoading(true);
-      // Navigate immediately to prevent seeing the login page
-      navigate("/profile");
-    }
-  }, [navigate]);
-
-  // On mount, check for remembered email
-  useEffect(() => {
+  // Check for remembered email on mount
+  React.useEffect(() => {
     const rememberedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY);
-    const expiry = localStorage.getItem(REMEMBER_EMAIL_EXPIRY_KEY);
-    if (rememberedEmail && expiry && Date.now() < Number(expiry)) {
+    if (rememberedEmail) {
       setEmail(rememberedEmail);
       setRememberMe(true);
-    } else {
-      localStorage.removeItem(REMEMBER_EMAIL_KEY);
-      localStorage.removeItem(REMEMBER_EMAIL_EXPIRY_KEY);
     }
   }, []);
 
-  // If user unchecks rememberMe, remove remembered email
-  useEffect(() => {
+  // Handle remember me changes
+  React.useEffect(() => {
     if (!rememberMe) {
       localStorage.removeItem(REMEMBER_EMAIL_KEY);
-      localStorage.removeItem(REMEMBER_EMAIL_EXPIRY_KEY);
     }
   }, [rememberMe]);
 
@@ -58,155 +35,139 @@ export default function AdminLogin() {
     setLoading(true);
     setError("");
 
-    try {
-      const res = await fetch(`${baseUrl}client/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+    // Simple admin authentication (for demo purposes)
+    // In a real app, you would validate against your backend
+    if (email === "admin@example.com" && password === "admin123") {
+      // Store admin token
+      localStorage.setItem("adminToken", "demo-admin-token");
+      localStorage.setItem("adminUser", JSON.stringify({ email, role: "Admin" }));
 
-      const data = await res.json();
-
-      if (res.ok && data.data.token) {
-        // Use the login function from AuthContext
-        // This ensures proper state synchronization
-        const token = data.data.token;
-        localStorage.setItem("ainetToken",token)
-
-       
-            toast.success("Login successful!");
-
-            // Remember email for 24 hours if checked
-            if (rememberMe) {
-              localStorage.setItem(REMEMBER_EMAIL_KEY, email);
-              localStorage.setItem(
-                REMEMBER_EMAIL_EXPIRY_KEY,
-                (Date.now() + 24 * 60 * 60 * 1000).toString()
-              );
-            } else {
-              localStorage.removeItem(REMEMBER_EMAIL_KEY);
-              localStorage.removeItem(REMEMBER_EMAIL_EXPIRY_KEY);
-            }
-
-            // Navigate immediately without delay
-            navigate("/profile");
-         
-        
-      } else {
-        setError(data.message || "Invalid email or password");
-        toast.error(data.message || "Invalid email or password");
+      // Remember email if checked
+      if (rememberMe) {
+        localStorage.setItem(REMEMBER_EMAIL_KEY, email);
       }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Network error. Please try again.");
-      toast.error("Network error. Please try again.");
-    } finally {
-      setLoading(false);
+
+      // Navigate to dashboard
+      navigate("/admin/dashboard");
+    } else {
+      setError("Invalid email or password. Use admin@example.com / admin123");
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen p-4">
-      {loading && <Loader />}
-      <div className="max-w-7xl mx-auto">
-        {/* Header Logo */}
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
         <div>
-          <img src="/loglogo.png" alt="Logo" className="w-1/6" />
+          <div className="mx-auto h-12 w-12 bg-teal-500 rounded-lg flex items-center justify-center">
+            <Lock className="h-8 w-8 text-white" />
+          </div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Admin Login
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Sign in to your admin account
+          </p>
         </div>
 
-        {/* Main Content */}
-        <div
-          className="rounded-3xl shadow-2xl overflow-hidden bg-cover"
-          style={{ backgroundImage: "url('/bg5.png')" }}
-        >
-          <div className="flex flex-col lg:flex-row min-h-[600px] pt-8 lg:pt-0">
-            {/* Left Image */}
-            <div className="lg:w-1/2 relative overflow-hidden flex items-center justify-center">
-              <img
-                src="Logban.jpg"
-                alt="Banner"
-                className="w-[85%] h-[85%] object-cover rounded-3xl"
-              />
+        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+              {error}
             </div>
-
-            {/* Right Login Form */}
-            <div className="lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center">
-              <div className="max-w-md mx-auto w-full">
-                <div className="mb-8">
-                  <img src="/loglogo.png" alt="Logo" className="w-1/2" />
-                  <h3 className="text-3xl font-extrabold text-gray-800 mb-2">
-                    Admin Login
-                  </h3>
-                  <p className="text-gray-600">Log in with your email</p>
+          )}
+          
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <div className="mt-1 relative">
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="appearance-none relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500 focus:z-10 sm:text-sm"
+                  placeholder="admin@example.com"
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
                 </div>
-
-                {/* Login Inputs */}
-                <form onSubmit={handleLogin} className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="text"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email"
-                      className="w-full px-4 py-3 border-2 border-black rounded-lg focus:border-gray-500 focus:outline-none transition-colors bg-transparent backdrop-blur-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Enter your password"
-                        className="w-full px-4 py-3 border-2 border-black rounded-lg focus:border-gray-500 focus:outline-none transition-colors bg-transparent backdrop-blur-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800 focus:outline-none"
-                      >
-                        {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center text-sm text-black">
-                      <input
-                        type="checkbox"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        className="w-4 h-4 text-black border-gray-300 rounded focus:ring-gray-500"
-                      />
-                      <span className="ml-2">Remember me</span>
-                    </label>
-                    <button className="text-sm text-black hover:text-gray-800">
-                      Forgot password?
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={handleLogin}
-                    disabled={loading}
-                    className="w-full bg-amber-100 hover:bg-amber-200 text-black font-semibold py-3 px-4 rounded-full transition-colors duration-200 border border-amber-200 disabled:opacity-60"
-                  >
-                    {loading ? "Logging in..." : "LOG IN"}
-                  </button>
-                </form>
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="mt-1 relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500 focus:z-10 sm:text-sm"
+                  placeholder="admin123"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
+                </button>
               </div>
             </div>
           </div>
-        </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                Remember me
+              </label>
+            </div>
+
+            <div className="text-sm">
+              <a href="#" className="font-medium text-teal-600 hover:text-teal-500">
+                Forgot your password?
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              ) : (
+                'Sign in'
+              )}
+            </button>
+          </div>
+          
+          <div className="text-center text-sm text-gray-600">
+            <p>Demo credentials: admin@example.com / admin123</p>
+          </div>
+        </form>
       </div>
     </div>
   );

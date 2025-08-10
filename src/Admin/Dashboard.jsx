@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Users, UserCheck, UserX, TrendingUp, Activity } from 'lucide-react';
 import Table from './Table';
 import UserModal from './UserModal';
 
@@ -155,6 +155,14 @@ const Dashboard = () => {
   });
   const usersPerPage = 10;
 
+  // Calculate statistics
+  const totalUsers = users.length;
+  const activeUsers = users.filter(user => user.status === 'active').length;
+  const inactiveUsers = users.filter(user => user.status === 'inactive').length;
+  const adminUsers = users.filter(user => user.role === 'Admin').length;
+  const managerUsers = users.filter(user => user.role === 'Manager').length;
+  const regularUsers = users.filter(user => user.role === 'User').length;
+
   // Filter users based on search term
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -269,6 +277,101 @@ const Dashboard = () => {
           <Plus size={16} />
           <span>Add User</span>
         </button>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-teal-500">
+          <div className="flex items-center">
+            <div className="p-2 bg-teal-100 rounded-lg">
+              <Users className="h-6 w-6 text-teal-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Users</p>
+              <p className="text-2xl font-semibold text-gray-900">{totalUsers}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+          <div className="flex items-center">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <UserCheck className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Active Users</p>
+              <p className="text-2xl font-semibold text-gray-900">{activeUsers}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+          <div className="flex items-center">
+            <div className="p-2 bg-red-100 rounded-lg">
+              <UserX className="h-6 w-6 text-red-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Inactive Users</p>
+              <p className="text-2xl font-semibold text-gray-900">{inactiveUsers}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <TrendingUp className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Admins</p>
+              <p className="text-2xl font-semibold text-gray-900">{adminUsers}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Role Distribution Chart */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Role Distribution</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-2xl font-bold text-teal-600">{adminUsers}</div>
+            <div className="text-sm text-gray-600">Administrators</div>
+          </div>
+          <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-2xl font-bold text-blue-600">{managerUsers}</div>
+            <div className="text-sm text-gray-600">Managers</div>
+          </div>
+          <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-2xl font-bold text-green-600">{regularUsers}</div>
+            <div className="text-sm text-gray-600">Regular Users</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
+        <div className="space-y-3">
+          {users.slice(0, 5).map((user, index) => (
+            <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                {user.avatar}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                <p className="text-xs text-gray-500">Joined {user.joinDate}</p>
+              </div>
+              <span className={`px-2 py-1 text-xs rounded-full ${
+                user.status === 'active' 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {user.status}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Search Bar */}

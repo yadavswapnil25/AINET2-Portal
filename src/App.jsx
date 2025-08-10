@@ -10,6 +10,7 @@ import Settings from './Admin/Settings';
 import PublicationManagement from './Admin/PublicationManagement';
 import FDLectureManagement from './Admin/FDLectureManagement';
 import ConferenceManagement from './Admin/ConferenceManagement';
+import WebinarManagement from './Admin/WebinarManagement';
 import './index.css';
 import Highlights from './Admin/Home/Highlights';
 import Events from './Admin/Home/Events';
@@ -61,9 +62,10 @@ function App() {
                           <Route path="users" element={<UserManagement />} />
               <Route path="settings" element={<Settings />} />
               <Route path="publications" element={<PublicationManagement />} />
-              <Route path="fdlectures" element={<FDLectureManagement />} />
-              <Route path="conferences" element={<ConferenceManagement />} />
-              <Route path="edit/:id" element={<EditPage />} />
+                           <Route path="fdlectures" element={<FDLectureManagement />} />
+             <Route path="conferences" element={<ConferenceManagement />} />
+             <Route path="webinars" element={<WebinarManagement />} />
+             <Route path="edit/:id" element={<EditPage />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
           <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />

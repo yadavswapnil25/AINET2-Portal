@@ -9,6 +9,7 @@ import {
   Newspaper,
   GraduationCap,
   Calendar,
+  Video,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -58,9 +59,10 @@ const Sidebar = ({ isOpen, onClose }) => {
         { label: 'Profile', path: '/admin/settings/profile' },
       ] 
     },
-    { icon: Newspaper, label: 'Publications', path: '/admin/publications' },
-    { icon: GraduationCap, label: 'FDLectures', path: '/admin/fdlectures' },
-    { icon: Calendar, label: 'Conferences', path: '/admin/conferences' },
+         { icon: Newspaper, label: 'Publications', path: '/admin/publications' },
+     { icon: GraduationCap, label: 'FDLectures', path: '/admin/fdlectures' },
+     { icon: Calendar, label: 'Conferences', path: '/admin/conferences' },
+     { icon: Video, label: 'Webinars', path: '/admin/webinars' },
   ];
 
   // Auto-open dropdown if current path belongs to a subItem

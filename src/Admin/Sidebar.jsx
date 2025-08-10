@@ -58,6 +58,9 @@ const Sidebar = ({ isOpen, onClose }) => {
         { label: 'Profile', path: '/admin/settings/profile' },
       ] 
     },
+    { icon: Newspaper, label: 'Publications', path: '/admin/publications' },
+    { icon: GraduationCap, label: 'FDLectures', path: '/admin/fdlectures' },
+    { icon: Calendar, label: 'Conferences', path: '/admin/conferences' },
   ];
 
   // Auto-open dropdown if current path belongs to a subItem

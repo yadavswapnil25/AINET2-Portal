@@ -263,16 +263,16 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-600">Welcome to your admin dashboard</p>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900">Dashboard</h1>
+          <p className="text-sm text-gray-600 mt-1">Welcome to your admin dashboard</p>
         </div>
         <button
           onClick={handleAddUser}
-          className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors shadow"
+          className="bg-teal-500 hover:bg-teal-600 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center space-x-2 transition-colors shadow w-full sm:w-auto"
         >
           <Plus size={16} />
           <span>Add User</span>
@@ -280,89 +280,89 @@ const Dashboard = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-teal-500">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-teal-500">
           <div className="flex items-center">
-            <div className="p-2 bg-teal-100 rounded-lg">
-              <Users className="h-6 w-6 text-teal-600" />
+            <div className="p-2 bg-teal-100 rounded-lg flex-shrink-0">
+              <Users className="h-5 w-5 sm:h-6 sm:w-6 text-teal-600" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Users</p>
-              <p className="text-2xl font-semibold text-gray-900">{totalUsers}</p>
+            <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Users</p>
+              <p className="text-xl sm:text-2xl font-semibold text-gray-900">{totalUsers}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-green-500">
           <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <UserCheck className="h-6 w-6 text-green-600" />
+            <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
+              <UserCheck className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Active Users</p>
-              <p className="text-2xl font-semibold text-gray-900">{activeUsers}</p>
+            <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Active Users</p>
+              <p className="text-xl sm:text-2xl font-semibold text-gray-900">{activeUsers}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-red-500">
           <div className="flex items-center">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <UserX className="h-6 w-6 text-red-600" />
+            <div className="p-2 bg-red-100 rounded-lg flex-shrink-0">
+              <UserX className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Inactive Users</p>
-              <p className="text-2xl font-semibold text-gray-900">{inactiveUsers}</p>
+            <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Inactive Users</p>
+              <p className="text-xl sm:text-2xl font-semibold text-gray-900">{inactiveUsers}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-blue-500">
           <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-blue-600" />
+            <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Admins</p>
-              <p className="text-2xl font-semibold text-gray-900">{adminUsers}</p>
+            <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Admins</p>
+              <p className="text-xl sm:text-2xl font-semibold text-gray-900">{adminUsers}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Role Distribution Chart */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Role Distribution</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-teal-600">{adminUsers}</div>
-            <div className="text-sm text-gray-600">Administrators</div>
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Role Distribution</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-lg">
+            <div className="text-xl sm:text-2xl font-bold text-teal-600">{adminUsers}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Administrators</div>
           </div>
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">{managerUsers}</div>
-            <div className="text-sm text-gray-600">Managers</div>
+          <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-lg">
+            <div className="text-xl sm:text-2xl font-bold text-blue-600">{managerUsers}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Managers</div>
           </div>
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">{regularUsers}</div>
-            <div className="text-sm text-gray-600">Regular Users</div>
+          <div className="text-center p-3 sm:p-4 bg-gray-50 rounded-lg">
+            <div className="text-xl sm:text-2xl font-bold text-green-600">{regularUsers}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Regular Users</div>
           </div>
         </div>
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
-        <div className="space-y-3">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
+        <div className="space-y-2 sm:space-y-3">
           {users.slice(0, 5).map((user, index) => (
-            <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+            <div key={index} className="flex items-center space-x-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-medium flex-shrink-0">
                 {user.avatar}
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">{user.name}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{user.name}</p>
                 <p className="text-xs text-gray-500">Joined {user.joinDate}</p>
               </div>
-              <span className={`px-2 py-1 text-xs rounded-full ${
+              <span className={`px-2 py-1 text-xs rounded-full flex-shrink-0 ${
                 user.status === 'active' 
                   ? 'bg-green-100 text-green-800' 
                   : 'bg-red-100 text-red-800'
@@ -375,8 +375,8 @@ const Dashboard = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="flex justify-between items-center">
-        <div className="relative w-72">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
           <input
             type="text"
@@ -400,7 +400,7 @@ const Dashboard = () => {
             onPageChange={setCurrentPage}
           />
         ) : (
-          <div className="p-8 text-center">
+          <div className="p-6 sm:p-8 text-center">
             <p className="text-gray-500">No users found matching your search.</p>
           </div>
         )}

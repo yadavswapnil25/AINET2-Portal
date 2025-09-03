@@ -104,20 +104,20 @@ const ConferenceManagement = () => {
 
   const renderCurrentConferenceForm = () => (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
           <BookOpen className="w-5 h-5 mr-2 text-blue-600" />
           Current Conference Details
         </h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Banner Image */}
-          <div className="md:col-span-2">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Banner Image URL
             </label>
             <div className="flex items-center space-x-2">
-              <ImageIcon className="w-5 h-5 text-gray-400" />
+              <ImageIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
               <input
                 type="url"
                 {...register("currentConference.bannerImage", { required: "Banner image is required" })}
@@ -131,7 +131,7 @@ const ConferenceManagement = () => {
           </div>
 
           {/* Full Title */}
-          <div className="md:col-span-2">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Full Conference Title
             </label>
@@ -146,112 +146,120 @@ const ConferenceManagement = () => {
             )}
           </div>
 
-          {/* Start Date & Time */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Start Date
-            </label>
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-5 h-5 text-gray-400" />
-              <input
-                type="date"
-                {...register("currentConference.startDate", { required: "Start date is required" })}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+          {/* Date & Time Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {/* Start Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Start Date
+              </label>
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <input
+                  type="date"
+                  {...register("currentConference.startDate", { required: "Start date is required" })}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {errors.currentConference?.startDate && (
+                <p className="text-red-500 text-sm mt-1">{errors.currentConference.startDate.message}</p>
+              )}
             </div>
-            {errors.currentConference?.startDate && (
-              <p className="text-red-500 text-sm mt-1">{errors.currentConference.startDate.message}</p>
-            )}
+
+            {/* Start Time */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Start Time
+              </label>
+              <div className="flex items-center space-x-2">
+                <Clock className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <input
+                  type="time"
+                  {...register("currentConference.startTime", { required: "Start time is required" })}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {errors.currentConference?.startTime && (
+                <p className="text-red-500 text-sm mt-1">{errors.currentConference.startTime.message}</p>
+              )}
+            </div>
+
+            {/* End Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                End Date
+              </label>
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <input
+                  type="date"
+                  {...register("currentConference.endDate", { required: "End date is required" })}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {errors.currentConference?.endDate && (
+                <p className="text-red-500 text-sm mt-1">{errors.currentConference.endDate.message}</p>
+              )}
+            </div>
+
+            {/* End Time */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                End Time
+              </label>
+              <div className="flex items-center space-x-2">
+                <Clock className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <input
+                  type="time"
+                  {...register("currentConference.endTime", { required: "End time is required" })}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {errors.currentConference?.endTime && (
+                <p className="text-red-500 text-sm mt-1">{errors.currentConference.endTime.message}</p>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Start Time
-            </label>
-            <div className="flex items-center space-x-2">
-              <Clock className="w-5 h-5 text-gray-400" />
-              <input
-                type="time"
-                {...register("currentConference.startTime", { required: "Start time is required" })}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+          {/* Location & Registration Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            {/* Location */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Location
+              </label>
+              <div className="flex items-center space-x-2">
+                <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <input
+                  type="text"
+                  {...register("currentConference.location", { required: "Location is required" })}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Conference venue"
+                />
+              </div>
+              {errors.currentConference?.location && (
+                <p className="text-red-500 text-sm mt-1">{errors.currentConference.location.message}</p>
+              )}
             </div>
-            {errors.currentConference?.startTime && (
-              <p className="text-red-500 text-sm mt-1">{errors.currentConference.startTime.message}</p>
-            )}
-          </div>
 
-          {/* End Date & Time */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              End Date
-            </label>
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-5 h-5 text-gray-400" />
-              <input
-                type="date"
-                {...register("currentConference.endDate", { required: "End date is required" })}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            {/* Registration Link */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Registration Link
+              </label>
+              <div className="flex items-center space-x-2">
+                <Link className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <input
+                  type="url"
+                  {...register("currentConference.registrationLink", { required: "Registration link is required" })}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="https://example.com/register"
+                />
+              </div>
+              {errors.currentConference?.registrationLink && (
+                <p className="text-red-500 text-sm mt-1">{errors.currentConference.registrationLink.message}</p>
+              )}
             </div>
-            {errors.currentConference?.endDate && (
-              <p className="text-red-500 text-sm mt-1">{errors.currentConference.endDate.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              End Time
-            </label>
-            <div className="flex items-center space-x-2">
-              <Clock className="w-5 h-5 text-gray-400" />
-              <input
-                type="time"
-                {...register("currentConference.endTime", { required: "End time is required" })}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            {errors.currentConference?.endTime && (
-              <p className="text-red-500 text-sm mt-1">{errors.currentConference.endTime.message}</p>
-            )}
-          </div>
-
-          {/* Location */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Location
-            </label>
-            <div className="flex items-center space-x-2">
-              <MapPin className="w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                {...register("currentConference.location", { required: "Location is required" })}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Conference venue"
-              />
-            </div>
-            {errors.currentConference?.location && (
-              <p className="text-red-500 text-sm mt-1">{errors.currentConference.location.message}</p>
-            )}
-          </div>
-
-          {/* Registration Link */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Registration Link
-            </label>
-            <div className="flex items-center space-x-2">
-              <Link className="w-5 h-5 text-gray-400" />
-              <input
-                type="url"
-                {...register("currentConference.registrationLink", { required: "Registration link is required" })}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://example.com/register"
-              />
-            </div>
-            {errors.currentConference?.registrationLink && (
-              <p className="text-red-500 text-sm mt-1">{errors.currentConference.registrationLink.message}</p>
-            )}
           </div>
 
           {/* Theme */}
@@ -269,65 +277,65 @@ const ConferenceManagement = () => {
               <p className="text-red-500 text-sm mt-1">{errors.currentConference.theme.message}</p>
             )}
           </div>
-        </div>
 
-        {/* Theme Description */}
-        <div className="mt-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Theme Description
-          </label>
-          <textarea
-            {...register("currentConference.themeDescription", { required: "Theme description is required" })}
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Describe the conference theme in detail..."
-          />
-          {errors.currentConference?.themeDescription && (
-            <p className="text-red-500 text-sm mt-1">{errors.currentConference.themeDescription.message}</p>
-          )}
-        </div>
-
-        {/* Sub-themes Management */}
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Sub-themes
+          {/* Theme Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Theme Description
             </label>
-            <button
-              type="button"
-              onClick={addSubTheme}
-              className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Sub-theme
-            </button>
+            <textarea
+              {...register("currentConference.themeDescription", { required: "Theme description is required" })}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Describe the conference theme in detail..."
+            />
+            {errors.currentConference?.themeDescription && (
+              <p className="text-red-500 text-sm mt-1">{errors.currentConference.themeDescription.message}</p>
+            )}
           </div>
 
-          <div className="space-y-4">
-            {subThemeFields.map((field, index) => (
-              <div key={field.id} className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg">
-                <div className="flex-1 space-y-3">
-                  <input
-                    {...register(`currentConference.subThemes.${index}.title`)}
-                    placeholder="Sub-theme title"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <textarea
-                    {...register(`currentConference.subThemes.${index}.description`)}
-                    placeholder="Sub-theme description"
-                    rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+          {/* Sub-themes Management */}
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Sub-themes
+              </label>
+              <button
+                type="button"
+                onClick={addSubTheme}
+                className="flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors w-full sm:w-auto"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Sub-theme
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {subThemeFields.map((field, index) => (
+                <div key={field.id} className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4 p-4 border border-gray-200 rounded-lg">
+                  <div className="flex-1 space-y-3">
+                    <input
+                      {...register(`currentConference.subThemes.${index}.title`)}
+                      placeholder="Sub-theme title"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <textarea
+                      {...register(`currentConference.subThemes.${index}.description`)}
+                      placeholder="Sub-theme description"
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeSubTheme(index)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors self-start sm:self-auto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeSubTheme(index)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -336,16 +344,16 @@ const ConferenceManagement = () => {
 
   const renderPreviousConferencesForm = () => (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+      <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-4">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center">
             <Calendar className="w-5 h-5 mr-2 text-blue-600" />
             Previous Conferences
           </h3>
           <button
             type="button"
             onClick={addPreviousConference}
-            className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Conference
@@ -355,7 +363,7 @@ const ConferenceManagement = () => {
         <div className="space-y-4">
           {previousConferenceFields.map((field, index) => (
             <div key={field.id} className="p-4 border border-gray-200 rounded-lg">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Conference Title
@@ -400,7 +408,7 @@ const ConferenceManagement = () => {
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Image URL
                   </label>
@@ -412,7 +420,7 @@ const ConferenceManagement = () => {
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Description
                   </label>
@@ -444,13 +452,13 @@ const ConferenceManagement = () => {
 
   const renderConferenceDetailsForm = () => (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
           <Settings className="w-5 h-5 mr-2 text-blue-600" />
           Conference Page Settings
         </h3>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Page Title */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -525,14 +533,14 @@ const ConferenceManagement = () => {
   );
 
   const renderPreview = () => (
-    <div className="bg-white p-6 rounded-lg shadow-sm border">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+    <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
+      <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6 flex items-center">
         <Eye className="w-5 h-5 mr-2 text-blue-600" />
         Preview
       </h3>
-      <div className="text-center py-12 text-gray-500">
-        <Globe className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-        <p className="text-lg font-medium">Conference Page Preview</p>
+      <div className="text-center py-8 sm:py-12 text-gray-500">
+        <Globe className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-gray-300" />
+        <p className="text-base sm:text-lg font-medium">Conference Page Preview</p>
         <p className="text-sm">Preview functionality will be implemented here</p>
       </div>
     </div>
@@ -540,21 +548,21 @@ const ConferenceManagement = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Conference Management</h1>
-          <p className="mt-2 text-gray-600">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Conference Management</h1>
+          <p className="mt-2 text-sm sm:text-base text-gray-600">
             Manage conference page content, upcoming events, and previous conferences
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex space-x-2">
+        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
             <button
               onClick={() => setIsPreviewMode(false)}
-              className={`px-4 py-2 rounded-md transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-md transition-colors text-sm sm:text-base ${
                 !isPreviewMode
                   ? 'bg-blue-600 text-white'
                   : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
@@ -565,7 +573,7 @@ const ConferenceManagement = () => {
             </button>
             <button
               onClick={() => setIsPreviewMode(true)}
-              className={`px-4 py-2 rounded-md transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-md transition-colors text-sm sm:text-base ${
                 isPreviewMode
                   ? 'bg-blue-600 text-white'
                   : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
@@ -579,7 +587,7 @@ const ConferenceManagement = () => {
           {!isPreviewMode && (
             <button
               onClick={handleSubmit(onSubmit)}
-              className="flex items-center px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              className="flex items-center justify-center px-4 sm:px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors w-full sm:w-auto text-sm sm:text-base"
             >
               <Save className="w-4 h-4 mr-2" />
               Save & Publish
@@ -590,11 +598,11 @@ const ConferenceManagement = () => {
         {isPreviewMode ? (
           renderPreview()
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             {/* Tabs */}
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="border-b border-gray-200">
-                <nav className="-mb-px flex space-x-8 px-6">
+                <nav className="-mb-px flex flex-wrap sm:flex-nowrap space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto">
                   {[
                     { id: 'current', label: 'Current Conference', icon: BookOpen },
                     { id: 'previous', label: 'Previous Conferences', icon: Calendar },
@@ -604,7 +612,7 @@ const ConferenceManagement = () => {
                       key={tab.id}
                       type="button"
                       onClick={() => setActiveTab(tab.id)}
-                      className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                      className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
                         activeTab === tab.id
                           ? 'border-blue-500 text-blue-600'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -617,7 +625,7 @@ const ConferenceManagement = () => {
                 </nav>
               </div>
 
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 {activeTab === 'current' && renderCurrentConferenceForm()}
                 {activeTab === 'previous' && renderPreviousConferencesForm()}
                 {activeTab === 'details' && renderConferenceDetailsForm()}

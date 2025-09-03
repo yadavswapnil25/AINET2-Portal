@@ -93,10 +93,12 @@ const Sidebar = ({ isOpen, onClose }) => {
       
       {/* Sidebar */}
       <div className={`
-        fixed lg:static inset-y-0 left-0 z-50 w-64 bg-slate-800 text-white transform transition-transform duration-300 ease-in-out shadow-xl
+        fixed lg:sticky lg:top-0 inset-y-0 left-0 z-50 w-64 bg-slate-800 text-white transform transition-transform duration-300 ease-in-out shadow-xl
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        lg:h-screen lg:overflow-y-auto
       `}>
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+        {/* Header */}
+        <div className="sticky top-0 bg-slate-800 z-10 flex items-center justify-between p-4 border-b border-slate-700">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center font-bold text-base shadow">
              AI
@@ -105,13 +107,14 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div>
           <button 
             onClick={onClose}
-            className="lg:hidden p-1 hover:bg-slate-700 rounded"
+            className="lg:hidden p-1 hover:bg-slate-700 rounded transition-colors"
           >
             <X size={16} />
           </button>
         </div>
         
-        <nav className="mt-6">
+        {/* Navigation */}
+        <nav className="mt-6 px-2 pb-20">
           {menuItems.map((item, index) => {
             const isActive = location.pathname === item.path;
             const hasActiveSub = item.subItems?.some(sub => location.pathname === sub.path);
@@ -119,29 +122,29 @@ const Sidebar = ({ isOpen, onClose }) => {
 
             if (item.subItems) {
               return (
-                <div key={index}>
+                <div key={index} className="mb-1">
                   <button
                     onClick={() => toggleDropdown(item.label)}
                     className={`
-                      flex items-center justify-between cursor-pointer w-full px-4 py-3 text-sm font-medium transition-colors duration-200
+                      flex items-center justify-between cursor-pointer w-full px-3 py-2.5 text-sm font-medium transition-all duration-200 rounded-md
                       ${(isDropdownOpen || hasActiveSub)
                         ? 'bg-slate-700 text-teal-400 border-r-2 border-teal-400' 
                         : 'text-slate-300 hover:bg-slate-700 hover:text-white'}
                     `}
                   >
                     <div className="flex items-center">
-                      <item.icon className="mr-3" size={18} />
-                      {item.label}
+                      <item.icon className="mr-3 flex-shrink-0" size={18} />
+                      <span className="truncate">{item.label}</span>
                     </div>
                     {isDropdownOpen ? (
-                      <ChevronUp size={16} />
+                      <ChevronUp size={16} className="flex-shrink-0" />
                     ) : (
-                      <ChevronDown size={16} />
+                      <ChevronDown size={16} className="flex-shrink-0" />
                     )}
                   </button>
 
                   {isDropdownOpen && (
-                    <div className="pl-10 bg-slate-700">
+                    <div className="mt-1 ml-4 bg-slate-700 rounded-md overflow-hidden">
                       {item.subItems.map((sub, subIndex) => {
                         const isSubActive = location.pathname === sub.path;
                         return (
@@ -150,9 +153,9 @@ const Sidebar = ({ isOpen, onClose }) => {
                             to={sub.path}
                             onClick={onClose}
                             className={`
-                              block py-2 text-sm transition-colors duration-200
+                              block py-2 px-3 text-sm transition-colors duration-200 hover:bg-slate-600
                               ${isSubActive 
-                                ? 'text-teal-400 font-semibold' 
+                                ? 'text-teal-400 font-semibold bg-slate-600' 
                                 : 'text-slate-300 hover:text-white'}
                             `}
                           >
@@ -172,20 +175,21 @@ const Sidebar = ({ isOpen, onClose }) => {
                 to={item.path}
                 onClick={onClose}
                 className={`
-                  flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200
+                  flex items-center px-3 py-2.5 text-sm font-medium transition-all duration-200 rounded-md mb-1
                   ${isActive 
                     ? 'bg-slate-700 text-teal-400 border-r-2 border-teal-400' 
                     : 'text-slate-300 hover:bg-slate-700 hover:text-white'}
                 `}
               >
-                <item.icon className="mr-3" size={18} />
-                {item.label}
+                <item.icon className="mr-3 flex-shrink-0" size={18} />
+                <span className="truncate">{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="absolute bottom-0 w-full border-t border-slate-700 p-4">
+        {/* Logout Button - Sticky Bottom */}
+        <div className="absolute bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 p-4">
           <button 
             onClick={() => {
               // Clear any stored authentication data
@@ -194,10 +198,10 @@ const Sidebar = ({ isOpen, onClose }) => {
               // Redirect to login page
               window.location.href = '/admin/login';
             }}
-            className="flex items-center text-slate-300 hover:text-white text-sm font-medium w-full hover:bg-slate-700 p-2 rounded transition-colors"
+            className="flex items-center text-slate-300 hover:text-white text-sm font-medium w-full hover:bg-slate-700 p-2 rounded-md transition-colors"
           >
-            <LogOut size={18} className="mr-3" />
-            Logout
+            <LogOut size={18} className="mr-3 flex-shrink-0" />
+            <span className="truncate">Logout</span>
           </button>
         </div>
       </div>

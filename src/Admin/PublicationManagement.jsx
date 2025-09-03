@@ -629,18 +629,19 @@ const PublicationManagement = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Publication Management</h1>
-          <p className="text-gray-600">Manage all publication content and sections</p>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Publication Management</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">Manage all publication content and sections</p>
         </div>
         
-        <div className="flex space-x-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setIsPreviewMode(!isPreviewMode)}
-            className={`px-4 py-2 rounded-md transition-colors flex items-center ${
+            className={`px-3 sm:px-4 py-2 rounded-md transition-colors flex items-center justify-center ${
               isPreviewMode 
                 ? 'bg-gray-500 text-white hover:bg-gray-600' 
                 : 'bg-blue-500 text-white hover:bg-blue-600'
@@ -654,7 +655,7 @@ const PublicationManagement = () => {
             type="submit"
             onClick={handleSubmit(onSubmit)}
             disabled={isSaving || !isDirty}
-            className="px-6 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            className="px-4 sm:px-6 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {isSaving ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -666,13 +667,14 @@ const PublicationManagement = () => {
         </div>
       </div>
 
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      {/* Tabs */}
+      <div className="border-b border-gray-200 overflow-x-auto">
+        <nav className="-mb-px flex space-x-4 sm:space-x-8 min-w-max">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'border-teal-500 text-teal-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -685,16 +687,17 @@ const PublicationManagement = () => {
         </nav>
       </div>
 
-      <div className="min-h-[600px]">
+      {/* Content */}
+      <div className="min-h-[400px] sm:min-h-[600px]">
         {isPreviewMode ? (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center">
-              <AlertCircle size={20} className="text-blue-500 mr-2" />
-              <p className="text-blue-700">Preview mode - This would show how your publication page will look.</p>
+              <AlertCircle size={20} className="text-blue-500 mr-2 flex-shrink-0" />
+              <p className="text-blue-700 text-sm sm:text-base">Preview mode - This would show how your publication page will look.</p>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             {activeTab === 'decentring-elt' && renderDecentringEltForm()}
             {activeTab === 'conferences' && renderConferencesForm()}
             {activeTab === 'papers' && renderPapersForm()}
@@ -704,11 +707,12 @@ const PublicationManagement = () => {
         )}
       </div>
 
+      {/* Unsaved Changes Indicator */}
       {isDirty && !isPreviewMode && (
-        <div className="fixed bottom-6 right-6 bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg">
+        <div className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 bg-yellow-500 text-white px-3 sm:px-4 py-2 rounded-lg shadow-lg z-50">
           <div className="flex items-center">
-            <AlertCircle size={16} className="mr-2" />
-            <span>You have unsaved changes</span>
+            <AlertCircle size={16} className="mr-2 flex-shrink-0" />
+            <span className="text-sm">You have unsaved changes</span>
           </div>
         </div>
       )}

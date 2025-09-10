@@ -7,6 +7,7 @@ import Dashboard from './Admin/Dashboard';
 import UserManagement from './Admin/UserManagement';
 import EditPage from './Admin/EditPage'; 
 import Settings from './Admin/Settings';
+import Profile from './Admin/Profile';
 import PublicationManagement from './Admin/PublicationManagement';
 import FDLectureManagement from './Admin/FDLectureManagement';
 import ConferenceManagement from './Admin/ConferenceManagement';
@@ -53,19 +54,18 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="edit/:id" element={<EditPage />} />
+            <Route path="profile" element={<Profile />} />
             <Route path="/admin/highlights" element={<Highlights/>} />
             <Route path="/admin/events" element={<Events/>} />
             <Route path="/admin/partners" element={<Partners/>} />
             <Route path="/admin/gallery" element={<Gallery/>} />
             <Route path="/admin/archives" element={<Archives/>} />
             <Route path="/admin/news" element={<News/>} />
-                          <Route path="users" element={<UserManagement />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="publications" element={<PublicationManagement />} />
-                           <Route path="fdlectures" element={<FDLectureManagement />} />
-             <Route path="conferences" element={<ConferenceManagement />} />
-             <Route path="webinars" element={<WebinarManagement />} />
-             <Route path="edit/:id" element={<EditPage />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="publications" element={<PublicationManagement />} />
+            <Route path="fdlectures" element={<FDLectureManagement />} />
+            <Route path="conferences" element={<ConferenceManagement />} />
+            <Route path="webinars" element={<WebinarManagement />} />
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
           <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />

@@ -12,6 +12,7 @@ import {
   Video,
   ChevronDown,
   ChevronUp,
+  User,
 } from 'lucide-react';
 import { IoHome } from "react-icons/io5";
 
@@ -24,6 +25,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: LayoutDashboard, 
       label: 'Dashboard', 
       path: '/admin/dashboard' 
+    },
+    { 
+      icon: User, 
+      label: 'Profile', 
+      path: '/admin/profile' 
     },
     { 
       icon: Users, 
@@ -56,7 +62,6 @@ const Sidebar = ({ isOpen, onClose }) => {
       label: 'Settings', 
       subItems: [
         { label: 'General', path: '/admin/settings' },
-        { label: 'Profile', path: '/admin/settings/profile' },
       ] 
     },
          { icon: Newspaper, label: 'Publications', path: '/admin/publications' },

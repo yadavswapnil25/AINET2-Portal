@@ -34,6 +34,7 @@ jobs:
       - name: Archive production build
         run: zip -r react-build.zip dist  # 'build' for CRA, 'dist' for Vite
 
+
       # 5. Upload build zip to server
       - name: Upload build to server
         uses: appleboy/scp-action@v0.1.7

@@ -1,4 +1,4 @@
-name: React Portal App Deployment
+name: React admin App Deployment
 
 on:
   push:
@@ -53,10 +53,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            rm -rf /var/www/ainet2-portal-build/*
+            rm -rf /var/www/ainet2-admin-build/*
             unzip -o /root/react/react-build.zip -d /root/react/
-            mv /root/react/dist/*  /var/www/ainet2-portal-build/
+            mv /root/react/dist/*  /var/www/ainet2-admin-build/
             rm -rf /root/react/
-            find /var/www/ainet2-portal-build -type d -exec chmod 755 {} \;
-            find /var/www/ainet2-portal-build -type f -exec chmod 644 {} \;
+            find /var/www/ainet2-admin-build -type d -exec chmod 755 {} \;
+            find /var/www/ainet2-admin-build -type f -exec chmod 644 {} \;
             sudo systemctl reload nginx

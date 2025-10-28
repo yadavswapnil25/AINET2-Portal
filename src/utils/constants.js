@@ -1,1 +1,1 @@
-export const baseUrl = import.meta.env.VITE_API_URL || "https://api.theainet.net/api/v1";
+export const baseUrl = import.meta.env.VITE_API_URL || "https://api.theainet.net/api/v1"

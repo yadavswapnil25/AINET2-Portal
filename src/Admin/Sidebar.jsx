@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Users, 
   Settings, 
@@ -13,10 +13,20 @@ import {
   ChevronDown,
   ChevronUp,
   User,
+  FileText,
+  ClipboardList,
 } from 'lucide-react';
 import { IoHome } from "react-icons/io5";
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/admin/login');
+  };
   const location = useLocation();
   const [openDropdown, setOpenDropdown] = useState(null);
 
@@ -68,6 +78,8 @@ const Sidebar = ({ isOpen, onClose }) => {
      { icon: GraduationCap, label: 'FDLectures', path: '/admin/fdlectures' },
      { icon: Calendar, label: 'Conferences', path: '/admin/conferences' },
      { icon: Video, label: 'Webinars', path: '/admin/webinars' },
+     { icon: FileText, label: 'PPFs', path: '/admin/ppfs' },
+     { icon: ClipboardList, label: 'DRFs', path: '/admin/drfs' },
   ];
 
   // Auto-open dropdown if current path belongs to a subItem
@@ -195,14 +207,13 @@ const Sidebar = ({ isOpen, onClose }) => {
 
         {/* Logout Button - Sticky Bottom */}
         <div className="absolute bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 p-4">
+          {user && (
+            <div className="mb-3 px-2 pb-2 border-b border-slate-700">
+              <p className="text-xs text-slate-400 truncate">{user.email}</p>
+            </div>
+          )}
           <button 
-            onClick={() => {
-              // Clear any stored authentication data
-              localStorage.removeItem('adminToken');
-              localStorage.removeItem('adminUser');
-              // Redirect to login page
-              window.location.href = '/admin/login';
-            }}
+            onClick={handleLogout}
             className="flex items-center text-slate-300 hover:text-white text-sm font-medium w-full hover:bg-slate-700 p-2 rounded-md transition-colors"
           >
             <LogOut size={18} className="mr-3 flex-shrink-0" />

@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 const REMEMBER_EMAIL_KEY = "rememberedEmail";
-const REMEMBER_EMAIL_EXPIRY_KEY = "rememberedEmailExpiry";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -13,6 +14,14 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/admin/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
 
   // Check for remembered email on mount
   React.useEffect(() => {
@@ -35,25 +44,29 @@ export default function AdminLogin() {
     setLoading(true);
     setError("");
 
-    // Simple admin authentication (for demo purposes)
-    // In a real app, you would validate against your backend
-    if (email === "admin@example.com" && password === "admin123") {
-      // Store admin token
-      localStorage.setItem("adminToken", "demo-admin-token");
-      localStorage.setItem("adminUser", JSON.stringify({ email, role: "Admin" }));
+    try {
+      const result = await login(email, password);
 
-      // Remember email if checked
-      if (rememberMe) {
-        localStorage.setItem(REMEMBER_EMAIL_KEY, email);
+      if (result.success) {
+        // Remember email if checked
+        if (rememberMe) {
+          localStorage.setItem(REMEMBER_EMAIL_KEY, email);
+        } else {
+          localStorage.removeItem(REMEMBER_EMAIL_KEY);
+        }
+
+        toast.success(result.message || "Login successful!");
+        navigate("/admin/dashboard");
+      } else {
+        setError(result.message || "Login failed. Please try again.");
+        toast.error(result.message || "Login failed. Please try again.");
       }
-
-      // Navigate to dashboard
-      navigate("/admin/dashboard");
-    } else {
-      setError("Invalid email or password. Use admin@example.com / admin123");
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -93,7 +106,7 @@ export default function AdminLogin() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500 focus:z-10 sm:text-sm"
-                  placeholder="admin@example.com"
+                  placeholder="email"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-gray-400" />
@@ -115,7 +128,7 @@ export default function AdminLogin() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500 focus:z-10 sm:text-sm"
-                  placeholder="admin123"
+                  placeholder="password"
                 />
                 <button
                   type="button"
@@ -164,9 +177,6 @@ export default function AdminLogin() {
             </button>
           </div>
           
-          <div className="text-center text-sm text-gray-600">
-            <p>Demo credentials: admin@example.com / admin123</p>
-          </div>
         </form>
       </div>
     </div>

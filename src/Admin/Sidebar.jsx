@@ -36,48 +36,48 @@ const Sidebar = ({ isOpen, onClose }) => {
       label: 'Dashboard', 
       path: '/admin/dashboard' 
     },
-    { 
-      icon: User, 
-      label: 'Profile', 
-      path: '/admin/profile' 
-    },
-    { 
-      icon: Users, 
-      label: 'User Management', 
-      subItems: [
-        { label: 'All Users', path: '/admin/users' },
-      ] 
-    },
-    { 
-      icon: IoHome, 
-      label: 'Home Page', 
-      subItems: [
-        { label: 'Highlights', path: '/admin/highlights' },
-        { label: 'Events', path: '/admin/events' },
-        { label: 'Partners', path: '/admin/partners' },
-        { label: 'Gallery', path: '/admin/gallery' },
-        { label: 'Archives', path: '/admin/archives' },
-      ] 
-    },
-    { 
-      icon: IoHome, 
-      label: 'About Page', 
-      subItems: [
-        { label: 'News', path: '/admin/news' },
+    // { 
+    //   icon: User, 
+    //   label: 'Profile', 
+    //   path: '/admin/profile' 
+    // },
+    // { 
+    //   icon: Users, 
+    //   label: 'User Management', 
+    //   subItems: [
+    //     { label: 'All Users', path: '/admin/users' },
+    //   ] 
+    // },
+    // { 
+    //   icon: IoHome, 
+    //   label: 'Home Page', 
+    //   subItems: [
+    //     { label: 'Highlights', path: '/admin/highlights' },
+    //     { label: 'Events', path: '/admin/events' },
+    //     { label: 'Partners', path: '/admin/partners' },
+    //     { label: 'Gallery', path: '/admin/gallery' },
+    //     { label: 'Archives', path: '/admin/archives' },
+    //   ] 
+    // },
+    // { 
+    //   icon: IoHome, 
+    //   label: 'About Page', 
+    //   subItems: [
+    //     { label: 'News', path: '/admin/news' },
       
-      ] 
-    },
-    { 
-      icon: Settings, 
-      label: 'Settings', 
-      subItems: [
-        { label: 'General', path: '/admin/settings' },
-      ] 
-    },
-         { icon: Newspaper, label: 'Publications', path: '/admin/publications' },
-     { icon: GraduationCap, label: 'FDLectures', path: '/admin/fdlectures' },
-     { icon: Calendar, label: 'Conferences', path: '/admin/conferences' },
-     { icon: Video, label: 'Webinars', path: '/admin/webinars' },
+    //   ] 
+    // },
+    // { 
+    //   icon: Settings, 
+    //   label: 'Settings', 
+    //   subItems: [
+    //     { label: 'General', path: '/admin/settings' },
+    //   ] 
+    // },
+    //      { icon: Newspaper, label: 'Publications', path: '/admin/publications' },
+    //  { icon: GraduationCap, label: 'FDLectures', path: '/admin/fdlectures' },
+    //  { icon: Calendar, label: 'Conferences', path: '/admin/conferences' },
+    //  { icon: Video, label: 'Webinars', path: '/admin/webinars' },
      { icon: FileText, label: 'PPFs', path: '/admin/ppfs' },
      { icon: ClipboardList, label: 'DRFs', path: '/admin/drfs' },
   ];

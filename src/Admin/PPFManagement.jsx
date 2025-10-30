@@ -13,14 +13,20 @@ import {
   Filter,
   Mail,
   Phone,
+  Plus,
+  Download,
+  Trash2,
 } from 'lucide-react';
 import { ppfAPI } from '../utils/api';
 import { useDebounce } from '../utils/useDebounce';
+import ConfirmModal from '../components/ConfirmModal';
 
 const PPFManagement = () => {
   const navigate = useNavigate();
   const [ppfs, setPpfs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [confirmState, setConfirmState] = useState({ open: false, ids: [], message: '', confirming: false });
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -64,6 +70,100 @@ const PPFManagement = () => {
     window.location.href = `/admin/ppfs/${id}`;
   };
 
+  // Handle export
+  const handleExport = async () => {
+    try {
+      const response = await ppfAPI.exportPPFs({
+        page: currentPage,
+        per_page: perPage,
+        search: debouncedSearchTerm,
+        sort_by: sortBy,
+        sort_order: sortOrder,
+      });
+
+      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a'); 
+      link.href = url;
+      const now = new Date();
+      const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+      const contentDisposition = response.headers['content-disposition'] || '';
+      const match = contentDisposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/);
+      const filename = (match && (decodeURIComponent(match[1] || match[2]) )) || `ppf_export_${ts}.csv`;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Export downloaded');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export records');
+    }
+  };
+
+  // Selection handlers
+  const toggleSelectAll = () => {
+    if (selectedIds.length === ppfs.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(ppfs.map((p) => p.id));
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  useEffect(() => {
+    // Clear selection when data changes
+    setSelectedIds([]);
+  }, [ppfs]);
+
+  const requestDelete = (ids) => {
+    const count = Array.isArray(ids) ? ids.length : 1;
+    const idsArr = Array.isArray(ids) ? ids : [ids];
+    setConfirmState({
+      open: true,
+      ids: idsArr,
+      message: `Delete ${count} record${count > 1 ? 's' : ''}? This action cannot be undone.`,
+      confirming: false,
+    });
+  };
+
+  const confirmDelete = async () => {
+    const ids = confirmState.ids;
+    setConfirmState((s) => ({ ...s, confirming: true }));
+    try {
+      let res;
+      if (ids.length === 1) {
+        res = await ppfAPI.deletePPF(ids[0]);
+      } else {
+        res = await ppfAPI.bulkDeletePPFs(ids);
+      }
+      if (res.status) {
+        toast.success(ids.length === 1 ? 'Deleted successfully' : 'Selected records deleted');
+        setSelectedIds([]);
+        fetchPPFs();
+      } else {
+        toast.error('Delete failed');
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('Delete failed');
+    } finally {
+      setConfirmState({ open: false, ids: [], message: '', confirming: false });
+    }
+  };
+
+  // Bulk delete
+  const handleBulkDelete = () => {
+    if (!selectedIds.length) return;
+    requestDelete(selectedIds);
+  };
+
   useEffect(() => {
     fetchPPFs();
   }, [currentPage, perPage, debouncedSearchTerm, sortBy, sortOrder]);
@@ -85,10 +185,15 @@ const PPFManagement = () => {
     setCurrentPage(1);
   };
 
-  // Get sort icon
+  // Update getSortIcon
   const getSortIcon = (field) => {
-    if (sortBy !== field) return null;
-    return sortOrder === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />;
+    const active = sortBy === field;
+    return (
+      <span className="flex flex-col items-center">
+        <ChevronUp size={16} className={active && sortOrder === 'asc' ? 'text-teal-600' : 'text-gray-300'} />
+        <ChevronDown size={16} className={active && sortOrder === 'desc' ? 'text-teal-600' : 'text-gray-300'} />
+      </span>
+    );
   };
 
   // Pagination controls
@@ -152,6 +257,24 @@ const PPFManagement = () => {
           <h1 className="text-2xl font-semibold text-gray-900">PPF Management</h1>
           <p className="text-sm text-gray-600">Manage Paper/Presentation Form submissions</p>
         </div>
+        <div className="flex items-center gap-3">
+       
+          <button
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-3 py-2 rounded text-sm"
+          >
+            <Download size={16} />
+            Export
+          </button>
+          <button
+            onClick={handleBulkDelete}
+            disabled={!selectedIds.length}
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded text-sm text-white ${selectedIds.length ? 'bg-red-600 hover:bg-red-700' : 'bg-red-400 cursor-not-allowed'}`}
+          >
+            <Trash2 size={16} />
+            Delete Selected
+          </button>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -192,6 +315,13 @@ const PPFManagement = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3">
+                  <input
+                    type="checkbox"
+                    checked={ppfs.length > 0 && selectedIds.length === ppfs.length}
+                    onChange={toggleSelectAll}
+                  />
+                </th>
                 <th
                   onClick={() => handleSort('id')}
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
@@ -233,8 +363,17 @@ const PPFManagement = () => {
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 >
                   <div className="flex items-center gap-2">
-                    Submitted
+                    Created
                     {getSortIcon('created_at')}
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSort('updated_at')}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-2">
+                    Updated
+                    {getSortIcon('updated_at')}
                   </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -245,6 +384,13 @@ const PPFManagement = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {ppfs.map((ppf) => (
                 <tr key={ppf.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-3 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(ppf.id)}
+                      onChange={() => toggleSelect(ppf.id)}
+                    />
+                  </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                     {ppf.id}
                   </td>
@@ -289,19 +435,46 @@ const PPFManagement = () => {
                       {formatDate(ppf.created_at)}
                     </div>
                   </td>
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <Calendar size={12} className="text-gray-400" />
+                      {formatDate(ppf.updated_at)}
+                    </div>
+                  </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => navigate(`/admin/ppfs/${ppf.id}`)}
-                      className="bg-teal-500 hover:bg-teal-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1"
-                    >
-                      <Eye size={14} />
-                      View
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => navigate(`/admin/ppfs/${ppf.id}`)}
+                        title="View"
+                        aria-label="View"
+                        className="p-2 rounded hover:bg-gray-100 text-teal-600 hover:text-teal-700 transition-colors"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        onClick={() => requestDelete(ppf.id)}
+                        title="Delete"
+                        aria-label="Delete"
+                        className="p-2 rounded hover:bg-gray-100 text-red-600 hover:text-red-700 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <ConfirmModal
+            open={confirmState.open}
+            title="Confirm Delete"
+            message={confirmState.message}
+            confirmText="Delete"
+            cancelText="Cancel"
+            confirming={confirmState.confirming}
+            onConfirm={confirmDelete}
+            onCancel={() => setConfirmState({ open: false, ids: [], message: '', confirming: false })}
+          />
         </div>
 
         {/* Pagination */}

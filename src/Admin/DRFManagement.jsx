@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Search, 
-  Eye, 
-  ChevronLeft, 
+import {
+  Search,
+  Eye,
+  ChevronLeft,
   ChevronRight,
   ChevronUp,
   ChevronDown,
@@ -13,21 +13,27 @@ import {
   Filter,
   Mail,
   Phone,
+  Plus,
+  Download,
+  Trash2,
 } from 'lucide-react';
 import { drfAPI } from '../utils/api';
 import { useDebounce } from '../utils/useDebounce';
+import ConfirmModal from '../components/ConfirmModal';
 
 const DRFManagement = () => {
   const navigate = useNavigate();
   const [drfs, setDrfs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [confirmState, setConfirmState] = useState({ open: false, ids: [], message: '', confirming: false });
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [perPage, setPerPage] = useState(10);
-  
+
   // Filter and sort state
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -64,6 +70,99 @@ const DRFManagement = () => {
     navigate(`/admin/drfs/${id}`);
   };
 
+  // Handle export
+  const handleExport = async () => {
+    try {
+      const response = await drfAPI.exportDRFs({
+        page: currentPage,
+        per_page: perPage,
+        search: debouncedSearchTerm,
+        sort_by: sortBy,
+        sort_order: sortOrder,
+      });
+
+      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const now = new Date();
+      const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+      const contentDisposition = response.headers['content-disposition'] || '';
+      const match = contentDisposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/);
+      const filename = (match && (decodeURIComponent(match[1] || match[2]))) || `drf_export_${ts}.csv`;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Export downloaded');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export records');
+    }
+  };
+
+  // Selection handlers
+  const toggleSelectAll = () => {
+    if (selectedIds.length === drfs.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(drfs.map((d) => d.id));
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  useEffect(() => {
+    // Clear selection when data changes
+    setSelectedIds([]);
+  }, [drfs]);
+
+  const requestDelete = (ids) => {
+    const count = Array.isArray(ids) ? ids.length : 1;
+    const idsArr = Array.isArray(ids) ? ids : [ids];
+    setConfirmState({
+      open: true,
+      ids: idsArr,
+      message: `Delete ${count} record${count > 1 ? 's' : ''}? This action cannot be undone.`,
+      confirming: false,
+    });
+  };
+
+  const confirmDelete = async () => {
+    const ids = confirmState.ids;
+    setConfirmState((s) => ({ ...s, confirming: true }));
+    try {
+      let res;
+      if (ids.length === 1) {
+        res = await drfAPI.deleteDRF(ids[0]);
+      } else {
+        res = await drfAPI.bulkDeleteDRFs(ids);
+      }
+      if (res.status) {
+        toast.success(ids.length === 1 ? 'Deleted successfully' : 'Selected records deleted');
+        setSelectedIds([]);
+        fetchDRFs();
+      } else {
+        toast.error('Delete failed');
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('Delete failed');
+    } finally {
+      setConfirmState({ open: false, ids: [], message: '', confirming: false });
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (!selectedIds.length) return;
+    requestDelete(selectedIds);
+  };
+
   useEffect(() => {
     fetchDRFs();
   }, [currentPage, perPage, debouncedSearchTerm, sortBy, sortOrder]);
@@ -85,17 +184,22 @@ const DRFManagement = () => {
     setCurrentPage(1);
   };
 
-  // Get sort icon
+  // Update getSortIcon to always show both icons, with the active one filled/dark and the inactive one light/outline
   const getSortIcon = (field) => {
-    if (sortBy !== field) return null;
-    return sortOrder === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />;
+    const active = sortBy === field;
+    return (
+      <span className="flex flex-col items-center">
+        <ChevronUp size={16} className={active && sortOrder === 'asc' ? 'text-teal-600' : 'text-gray-300'} />
+        <ChevronDown size={16} className={active && sortOrder === 'desc' ? 'text-teal-600' : 'text-gray-300'} />
+      </span>
+    );
   };
 
   // Pagination controls
   const getPageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
-    
+
     if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -117,7 +221,7 @@ const DRFManagement = () => {
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
@@ -152,6 +256,24 @@ const DRFManagement = () => {
           <h1 className="text-2xl font-semibold text-gray-900">DRF Management</h1>
           <p className="text-sm text-gray-600">Manage Delegate Registration Form submissions</p>
         </div>
+        <div className="flex items-center gap-3">
+
+          <button
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-3 py-2 rounded text-sm"
+          >
+            <Download size={16} />
+            Export
+          </button>
+          <button
+            onClick={handleBulkDelete}
+            disabled={!selectedIds.length}
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded text-sm text-white ${selectedIds.length ? 'bg-red-600 hover:bg-red-700' : 'bg-red-400 cursor-not-allowed'}`}
+          >
+            <Trash2 size={16} />
+            Delete Selected
+          </button>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -167,7 +289,7 @@ const DRFManagement = () => {
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
             />
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Filter className="text-gray-400" size={16} />
             <select
@@ -192,6 +314,13 @@ const DRFManagement = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3">
+                  <input
+                    type="checkbox"
+                    checked={drfs.length > 0 && selectedIds.length === drfs.length}
+                    onChange={toggleSelectAll}
+                  />
+                </th>
                 <th
                   onClick={() => handleSort('id')}
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
@@ -216,13 +345,16 @@ const DRFManagement = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Areas
                 </th>
-                <th
-                  onClick={() => handleSort('created_at')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                >
+                <th onClick={() => handleSort('created_at')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
                   <div className="flex items-center gap-2">
-                    Submitted
+                    Created
                     {getSortIcon('created_at')}
+                  </div>
+                </th>
+                <th onClick={() => handleSort('updated_at')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                  <div className="flex items-center gap-2">
+                    Updated
+                    {getSortIcon('updated_at')}
                   </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -233,6 +365,13 @@ const DRFManagement = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {drfs.map((drf) => (
                 <tr key={drf.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-3 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(drf.id)}
+                      onChange={() => toggleSelect(drf.id)}
+                    />
+                  </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                     {drf.id}
                   </td>
@@ -275,19 +414,46 @@ const DRFManagement = () => {
                       {formatDate(drf.created_at)}
                     </div>
                   </td>
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <Calendar size={12} className="text-gray-400" />
+                      {formatDate(drf.updated_at)}
+                    </div>
+                  </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => navigate(`/admin/drfs/${drf.id}`)}
-                      className="bg-teal-500 hover:bg-teal-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1"
-                    >
-                      <Eye size={14} />
-                      View
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => navigate(`/admin/drfs/${drf.id}`)}
+                        title="View"
+                        aria-label="View"
+                        className="p-2 rounded hover:bg-gray-100 text-teal-600 hover:text-teal-700 transition-colors"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        onClick={() => requestDelete(drf.id)}
+                        title="Delete"
+                        aria-label="Delete"
+                        className="p-2 rounded hover:bg-gray-100 text-red-600 hover:text-red-700 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <ConfirmModal
+            open={confirmState.open}
+            title="Confirm Delete"
+            message={confirmState.message}
+            confirmText="Delete"
+            cancelText="Cancel"
+            confirming={confirmState.confirming}
+            onConfirm={confirmDelete}
+            onCancel={() => setConfirmState({ open: false, ids: [], message: '', confirming: false })}
+          />
         </div>
 
         {/* Pagination */}
@@ -339,11 +505,10 @@ const DRFManagement = () => {
                         key={index}
                         onClick={() => typeof page === 'number' && setCurrentPage(page)}
                         disabled={page === '...'}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          page === currentPage
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${page === currentPage
                             ? 'z-10 bg-teal-50 border-teal-500 text-teal-600'
                             : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 disabled:cursor-default'
-                        }`}
+                          }`}
                       >
                         {page}
                       </button>
@@ -377,4 +542,3 @@ const DRFManagement = () => {
 };
 
 export default DRFManagement;
-     

@@ -177,6 +177,33 @@ export const ppfAPI = {
     const response = await apiClient.get(`/client/admin/ppf/${id}`);
     return response.data;
   },
+
+  // Export PPF records
+  exportPPFs: async (params = {}) => {
+    const queryParams = new URLSearchParams({
+      per_page: params.per_page || 10,
+      page: params.page || 1,
+      search: params.search || '',
+      sort_by: params.sort_by || 'created_at',
+      sort_order: params.sort_order || 'desc',
+    });
+    const response = await apiClient.get(`/client/admin/ppf/export?${queryParams}`, {
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  // Delete single PPF
+  deletePPF: async (id) => {
+    const response = await apiClient.delete(`/client/admin/ppf/${id}`);
+    return response.data;
+  },
+
+  // Bulk delete PPFs
+  bulkDeletePPFs: async (ids = []) => {
+    const response = await apiClient.post(`/client/admin/ppf/bulk`, { ids });
+    return response.data;
+  },
 };
 
 // DRF API methods
@@ -197,6 +224,33 @@ export const drfAPI = {
   // Get single DRF record
   getDRF: async (id) => {
     const response = await apiClient.get(`/client/admin/drf/${id}`);
+    return response.data;
+  },
+
+  // Export DRF records
+  exportDRFs: async (params = {}) => {
+    const queryParams = new URLSearchParams({
+      per_page: params.per_page || 10,
+      page: params.page || 1,
+      search: params.search || '',
+      sort_by: params.sort_by || 'created_at',
+      sort_order: params.sort_order || 'desc',
+    });
+    const response = await apiClient.get(`/client/admin/drf/export?${queryParams}`, {
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  // Delete single DRF
+  deleteDRF: async (id) => {
+    const response = await apiClient.delete(`/client/admin/drf/${id}`);
+    return response.data;
+  },
+
+  // Bulk delete DRFs
+  bulkDeleteDRFs: async (ids = []) => {
+    const response = await apiClient.post(`/client/admin/drf/bulk`, { ids });
     return response.data;
   },
 };

@@ -39,6 +39,8 @@ const DRFManagement = () => {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   // Fetch DRF records
   const fetchDRFs = async () => {
@@ -50,6 +52,8 @@ const DRFManagement = () => {
         search: debouncedSearchTerm,
         sort_by: sortBy,
         sort_order: sortOrder,
+        start_date: startDate,
+        end_date: endDate,
       });
 
       if (response.status) {
@@ -79,6 +83,8 @@ const DRFManagement = () => {
         search: debouncedSearchTerm,
         sort_by: sortBy,
         sort_order: sortOrder,
+        start_date: startDate,
+        end_date: endDate,
       });
 
       const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
@@ -165,11 +171,28 @@ const DRFManagement = () => {
 
   useEffect(() => {
     fetchDRFs();
-  }, [currentPage, perPage, debouncedSearchTerm, sortBy, sortOrder]);
+  }, [currentPage, perPage, debouncedSearchTerm, sortBy, sortOrder, startDate, endDate]);
 
   // Handle search
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  // Handle date filter change
+  const handleDateChange = (type, value) => {
+    if (type === 'start') {
+      setStartDate(value);
+    } else {
+      setEndDate(value);
+    }
+    setCurrentPage(1);
+  };
+
+  // Clear date filters
+  const clearDateFilters = () => {
+    setStartDate('');
+    setEndDate('');
     setCurrentPage(1);
   };
 
@@ -278,32 +301,70 @@ const DRFManagement = () => {
 
       {/* Search and Filters */}
       <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-            <input
-              type="text"
-              placeholder="Search by name, email, or institution..."
-              value={searchTerm}
-              onChange={handleSearch}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
-            />
-          </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+              <input
+                type="text"
+                placeholder="Search by name, email, or institution..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
+              />
+            </div>
 
-          <div className="flex items-center gap-2">
-            <Filter className="text-gray-400" size={16} />
-            <select
-              value={perPage}
-              onChange={(e) => {
-                setPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
-            >
-              <option value={10}>10 per page</option>
-              <option value={20}>20 per page</option>
-              <option value={50}>50 per page</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <Filter className="text-gray-400" size={16} />
+              <select
+                value={perPage}
+                onChange={(e) => {
+                  setPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+              >
+                <option value={10}>10 per page</option>
+                <option value={20}>20 per page</option>
+                <option value={50}>50 per page</option>
+              </select>
+            </div>
+          </div>
+          
+          {/* Date Filters */}
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="flex-1 sm:flex-none flex flex-col sm:flex-row gap-3 sm:items-center">
+              <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Date Range:</label>
+              <div className="flex items-center gap-2 flex-1 sm:flex-none">
+                <Calendar className="text-gray-400" size={16} />
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => handleDateChange('start', e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
+                  placeholder="Start Date"
+                />
+              </div>
+              <span className="text-gray-500 text-sm">to</span>
+              <div className="flex items-center gap-2 flex-1 sm:flex-none">
+                <Calendar className="text-gray-400" size={16} />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => handleDateChange('end', e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
+                  placeholder="End Date"
+                />
+              </div>
+              {(startDate || endDate) && (
+                <button
+                  onClick={clearDateFilters}
+                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

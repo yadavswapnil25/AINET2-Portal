@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
             setIsAuthenticated(false);
           }
         } catch (error) {
-          // Token invalid or expired (refresh token will be handled by interceptor)
+         
           localStorage.removeItem('adminToken');
           localStorage.removeItem('adminRefreshToken');
           localStorage.removeItem('adminUser');

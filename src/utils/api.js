@@ -168,6 +168,12 @@ export const ppfAPI = {
       sort_by: params.sort_by || 'created_at',
       sort_order: params.sort_order || 'desc',
     });
+    if (params.start_date) {
+      queryParams.append('start_date', params.start_date);
+    }
+    if (params.end_date) {
+      queryParams.append('end_date', params.end_date);
+    }
     const response = await apiClient.get(`/client/admin/ppf?${queryParams}`);
     return response.data;
   },
@@ -187,6 +193,12 @@ export const ppfAPI = {
       sort_by: params.sort_by || 'created_at',
       sort_order: params.sort_order || 'desc',
     });
+    if (params.start_date) {
+      queryParams.append('start_date', params.start_date);
+    }
+    if (params.end_date) {
+      queryParams.append('end_date', params.end_date);
+    }
     const response = await apiClient.get(`/client/admin/ppf/export?${queryParams}`, {
       responseType: 'blob',
     });
@@ -217,6 +229,12 @@ export const drfAPI = {
       sort_by: params.sort_by || 'created_at',
       sort_order: params.sort_order || 'desc',
     });
+    if (params.start_date) {
+      queryParams.append('start_date', params.start_date);
+    }
+    if (params.end_date) {
+      queryParams.append('end_date', params.end_date);
+    }
     const response = await apiClient.get(`/client/admin/drf?${queryParams}`);
     return response.data;
   },
@@ -236,6 +254,12 @@ export const drfAPI = {
       sort_by: params.sort_by || 'created_at',
       sort_order: params.sort_order || 'desc',
     });
+    if (params.start_date) {
+      queryParams.append('start_date', params.start_date);
+    }
+    if (params.end_date) {
+      queryParams.append('end_date', params.end_date);
+    }
     const response = await apiClient.get(`/client/admin/drf/export?${queryParams}`, {
       responseType: 'blob',
     });

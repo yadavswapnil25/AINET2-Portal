@@ -41,6 +41,8 @@ const PPFManagement = () => {
   const [sortOrder, setSortOrder] = useState('desc');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [appliedStartDate, setAppliedStartDate] = useState('');
+  const [appliedEndDate, setAppliedEndDate] = useState('');
 
   // Fetch PPF records
   const fetchPPFs = async () => {
@@ -52,8 +54,8 @@ const PPFManagement = () => {
         search: debouncedSearchTerm,
         sort_by: sortBy,
         sort_order: sortOrder,
-        start_date: startDate,
-        end_date: endDate,
+        start_date: appliedStartDate,
+        end_date: appliedEndDate,
       });
 
       if (response.status) {
@@ -83,8 +85,8 @@ const PPFManagement = () => {
         search: debouncedSearchTerm,
         sort_by: sortBy,
         sort_order: sortOrder,
-        start_date: startDate,
-        end_date: endDate,
+        start_date: appliedStartDate,
+        end_date: appliedEndDate,
       });
 
       const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
@@ -172,7 +174,7 @@ const PPFManagement = () => {
 
   useEffect(() => {
     fetchPPFs();
-  }, [currentPage, perPage, debouncedSearchTerm, sortBy, sortOrder, startDate, endDate]);
+  }, [currentPage, perPage, debouncedSearchTerm, sortBy, sortOrder, appliedStartDate, appliedEndDate]);
 
   // Handle search
   const handleSearch = (e) => {
@@ -187,6 +189,12 @@ const PPFManagement = () => {
     } else {
       setEndDate(value);
     }
+  };
+
+  // Apply date filters
+  const applyDateFilters = () => {
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
     setCurrentPage(1);
   };
 
@@ -194,6 +202,8 @@ const PPFManagement = () => {
   const clearDateFilters = () => {
     setStartDate('');
     setEndDate('');
+    setAppliedStartDate('');
+    setAppliedEndDate('');
     setCurrentPage(1);
   };
 
@@ -357,7 +367,14 @@ const PPFManagement = () => {
                   placeholder="End Date"
                 />
               </div>
-              {(startDate || endDate) && (
+              <button
+                onClick={applyDateFilters}
+                className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                <Search size={16} />
+                Search
+              </button>
+              {(appliedStartDate || appliedEndDate) && (
                 <button
                   onClick={clearDateFilters}
                   className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"

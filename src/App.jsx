@@ -18,6 +18,7 @@ import PPFManagement from './Admin/PPFManagement';
 import PPFView from './Admin/PPFView';
 import DRFManagement from './Admin/DRFManagement';
 import DRFView from './Admin/DRFView';
+import MembershipManagement from './Admin/MembershipManagement';
 import './index.css';
 import Highlights from './Admin/Home/Highlights';
 import Events from './Admin/Home/Events';
@@ -84,6 +85,7 @@ function App() {
               <Route path="ppfs/:id" element={<PPFView />} />
               <Route path="drfs" element={<DRFManagement />} />
               <Route path="drfs/:id" element={<DRFView />} />
+              <Route path="memberships" element={<MembershipManagement />} />
               <Route index element={<Navigate to="dashboard" replace />} />
             </Route>
             <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />

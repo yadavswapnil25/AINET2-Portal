@@ -1,47 +1,59 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Pencil, Trash2, X } from "lucide-react";
+import { websiteAPI } from '../../utils/api';
+import { toast } from 'react-hot-toast';
 
 const Partners = () => {
-  const [partners, setPartners] = useState([
-    {
-      logo: "https://via.placeholder.com/80",
-      title: "Partner One",
-      subtitle: "Leading EdTech Organization",
-    },
-    {
-      logo: "https://via.placeholder.com/80",
-      title: "Partner Two",
-      subtitle: "International Language Institution",
-    },
-    {
-      logo: "https://via.placeholder.com/80",
-      title: "Partner Three",
-      subtitle: "Global Research Group",
-    },
-  ]);
+  const [partners, setPartners] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPartnerIndex, setCurrentPartnerIndex] = useState(null);
   const [tempPartner, setTempPartner] = useState({});
 
-  const handleUpdatePartner = (index) => {
-    setCurrentPartnerIndex(index);
-    setTempPartner(partners[index]);
-    setIsModalOpen(true);
-  };
+  // Fetch partners from API
+  useEffect(() => {
+    const fetchPartners = async () => {
+      try {
+        setIsLoading(true);
+        const response = await websiteAPI.getPartners();
+        if (response.status && response.data.partners) {
+          setPartners(response.data.partners.map(p => ({
+            id: p.id,
+            logo: p.logo_url || 'https://via.placeholder.com/80',
+            title: p.name,
+            subtitle: p.subtitle || '',
+            link_url: p.link_url,
+          })));
+        }
+      } catch (error) {
+        console.error('Failed to fetch partners:', error);
+        toast.error('Failed to load partners');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const handleSavePartner = () => {
-    const updatedPartners = [...partners];
-    updatedPartners[currentPartnerIndex] = tempPartner;
-    setPartners(updatedPartners);
-    setIsModalOpen(false);
+    fetchPartners();
+  }, []);
+
+  const handleUpdatePartner = (index) => {
+    // Navigate to PartnerManagement page
+    window.location.href = '/admin/partners';
   };
 
   const handleDeletePartner = (index) => {
-    if (window.confirm("Are you sure you want to delete this partner?")) {
-      setPartners(partners.filter((_, i) => i !== index));
-    }
+    // Navigate to PartnerManagement page
+    window.location.href = '/admin/partners';
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <p className="text-gray-500">Loading partners...</p>
+      </div>
+    );
+  }
 
   return (
     <div className=" relative">
@@ -97,69 +109,6 @@ const Partners = () => {
         <p className="text-gray-500 italic">No partners available</p>
       )}
 
-      {/* Partner Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-[420px] relative">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
-            >
-              <X size={20} />
-            </button>
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Update Partner
-            </h3>
-            <label className="block mb-3">
-              <span className="text-sm font-medium text-gray-700">Logo URL</span>
-              <input
-                type="text"
-                value={tempPartner.logo}
-                onChange={(e) =>
-                  setTempPartner({ ...tempPartner, logo: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md p-3"
-              />
-            </label>
-            <label className="block mb-3">
-              <span className="text-sm font-medium text-gray-700">Title</span>
-              <input
-                type="text"
-                value={tempPartner.title}
-                onChange={(e) =>
-                  setTempPartner({ ...tempPartner, title: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md p-3"
-              />
-            </label>
-            <label className="block mb-4">
-              <span className="text-sm font-medium text-gray-700">Subtitle</span>
-              <input
-                type="text"
-                value={tempPartner.subtitle}
-                onChange={(e) =>
-                  setTempPartner({ ...tempPartner, subtitle: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md p-3"
-              />
-            </label>
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSavePartner}
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

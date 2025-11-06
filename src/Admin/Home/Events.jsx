@@ -1,56 +1,106 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pencil, Trash2, Calendar, MapPin, Link as LinkIcon, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { websiteAPI, eventAPI } from '../../utils/api';
+import { toast } from 'react-hot-toast';
 
 const Events = () => {
-  const [conference, setConference] = useState({
-    title: "9th AINET International Conference",
-    date: "January 2026",
-    location: "January 2026 Lucknow, India",
-    cta: "Coming soon",
-  });
-
-  const [events, setEvents] = useState([
-    {
-      title: "AINET Foundation Week Programmes.",
-      location: "Online",
-      date: "5 - 12 September 2025",
-      cta: "/haja",
-    },
-    {
-      title: "Rural ELT Conference.",
-      location: "Maharashtra",
-      date: "October 2025",
-      cta: "/jasasja/sahsha",
-    },
-    {
-      title: "Webinar on HELE.",
-      location: "Online",
-      date: "TBA",
-      cta: "/sasaskasias/sajsja",
-    },
-  ]);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [tempConference, setTempConference] = useState(conference);
+  const navigate = useNavigate();
+  const [conference, setConference] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [currentEventIndex, setCurrentEventIndex] = useState(null);
   const [tempEvent, setTempEvent] = useState({});
 
+  // Fetch conference and events from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch conference (event_type='conference', limit=1, sort by sort_order)
+        const conferenceResponse = await websiteAPI.getEvents({ 
+          limit: 1, 
+          event_type: 'conference' 
+        });
+        
+        if (conferenceResponse.status && conferenceResponse.data.events.length > 0) {
+          const conf = conferenceResponse.data.events[0];
+          setConference({
+            id: conf.id,
+            title: conf.title,
+            date: conf.date_display || 'TBA',
+            location: conf.location,
+            cta: conf.link_url || 'Coming soon',
+            event_date: conf.event_date,
+            event_date_end: conf.event_date_end,
+            description: conf.description,
+          });
+        }
+
+        // Fetch other events (excluding conference)
+        const eventsResponse = await websiteAPI.getEvents({ limit: 10 });
+        if (eventsResponse.status) {
+          // Filter out the conference event
+          const otherEvents = eventsResponse.data.events.filter(
+            e => e.event_type !== 'conference' || e.id !== (conferenceResponse.data.events[0]?.id)
+          );
+          setEvents(otherEvents.map(e => ({
+            id: e.id,
+            title: e.title,
+            location: e.location,
+            date: e.date_display || 'TBA',
+            cta: e.link_url || '#',
+          })));
+        }
+      } catch (error) {
+        console.error('Failed to fetch events:', error);
+        toast.error('Failed to load events');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   // Conference handlers
   const handleUpdateConference = () => {
-    setTempConference(conference);
-    setIsModalOpen(true);
+    // Navigate to EventManagement page to edit the conference
+    if (conference?.id) {
+      navigate(`/admin/events`);
+      // You can also pass the event ID if needed
+    }
   };
 
-  const handleSaveConference = () => {
-    setConference(tempConference);
-    setIsModalOpen(false);
-  };
-
-  const handleDeleteConference = () => {
+  const handleDeleteConference = async () => {
     if (window.confirm("Are you sure you want to delete this conference?")) {
-      setConference(null);
+      try {
+        if (conference?.id) {
+          const res = await eventAPI.deleteEvent(conference.id);
+          if (res.status) {
+            toast.success('Conference deleted');
+            setConference(null);
+            // Refresh events list
+            const eventsResponse = await websiteAPI.getEvents({ limit: 10 });
+            if (eventsResponse.status) {
+              setEvents(eventsResponse.data.events.map(e => ({
+                id: e.id,
+                title: e.title,
+                location: e.location,
+                date: e.date_display || 'TBA',
+                cta: e.link_url || '#',
+              })));
+            }
+          } else {
+            toast.error('Failed to delete conference');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to delete conference:', error);
+        toast.error('Failed to delete conference');
+      }
     }
   };
 
@@ -73,6 +123,14 @@ const Events = () => {
       setEvents(events.filter((_, i) => i !== index));
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <p className="text-gray-500">Loading events...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="">
@@ -137,25 +195,6 @@ const Events = () => {
         <p className="text-gray-500 italic">No upcoming events</p>
       )}
 
-      {/* Conference Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-[420px] relative">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-3 right-3 text-gray-500 hover:text-gray-800">
-              <X size={20} />
-            </button>
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Update Conference</h3>
-            <input type="text" value={tempConference.title} onChange={(e) => setTempConference({ ...tempConference, title: e.target.value })} className="w-full mb-3 border border-gray-300 rounded-md p-3" placeholder="Conference Title" />
-            <input type="text" value={tempConference.date} onChange={(e) => setTempConference({ ...tempConference, date: e.target.value })} className="w-full mb-3 border border-gray-300 rounded-md p-3" placeholder="Date" />
-            <input type="text" value={tempConference.location} onChange={(e) => setTempConference({ ...tempConference, location: e.target.value })} className="w-full mb-3 border border-gray-300 rounded-md p-3" placeholder="Location" />
-            <input type="text" value={tempConference.cta} onChange={(e) => setTempConference({ ...tempConference, cta: e.target.value })} className="w-full mb-4 border border-gray-300 rounded-md p-3" placeholder="CTA Link" />
-            <div className="flex justify-end space-x-2">
-              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg">Cancel</button>
-              <button onClick={handleSaveConference} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg">Save</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Event Modal */}
       {isEventModalOpen && (

@@ -19,6 +19,12 @@ import PPFView from './Admin/PPFView';
 import DRFManagement from './Admin/DRFManagement';
 import DRFView from './Admin/DRFView';
 import MembershipManagement from './Admin/MembershipManagement';
+import BannerManagement from './Admin/BannerManagement';
+import EventManagement from './Admin/EventManagement';
+import PartnerManagement from './Admin/PartnerManagement';
+import GalleryManagement from './Admin/GalleryManagement';
+import NewsManagement from './Admin/NewsManagement';
+import NewsletterManagement from './Admin/NewsletterManagement';
 import './index.css';
 import Highlights from './Admin/Home/Highlights';
 import Events from './Admin/Home/Events';
@@ -71,8 +77,8 @@ function App() {
               <Route path="edit/:id" element={<EditPage />} />
               <Route path="profile" element={<Profile />} />
               <Route path="/admin/highlights" element={<Highlights/>} />
-              <Route path="/admin/events" element={<Events/>} />
-              <Route path="/admin/partners" element={<Partners/>} />
+              <Route path="/admin/home/events" element={<Events/>} />
+              <Route path="/admin/home/partners" element={<Partners/>} />
               <Route path="/admin/gallery" element={<Gallery/>} />
               <Route path="/admin/archives" element={<Archives/>} />
               <Route path="/admin/news" element={<News/>} />
@@ -86,6 +92,12 @@ function App() {
               <Route path="drfs" element={<DRFManagement />} />
               <Route path="drfs/:id" element={<DRFView />} />
               <Route path="memberships" element={<MembershipManagement />} />
+              <Route path="banners" element={<BannerManagement />} />
+              <Route path="events" element={<EventManagement />} />
+              <Route path="partners" element={<PartnerManagement />} />
+              <Route path="galleries" element={<GalleryManagement />} />
+              <Route path="news-management" element={<NewsManagement />} />
+              <Route path="newsletters" element={<NewsletterManagement />} />
               <Route index element={<Navigate to="dashboard" replace />} />
             </Route>
             <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />

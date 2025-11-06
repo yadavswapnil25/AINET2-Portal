@@ -279,4 +279,426 @@ export const drfAPI = {
   },
 };
 
+// Banner API methods
+export const bannerAPI = {
+  getBanners: async (params = {}) => {
+    const queryParams = new URLSearchParams({
+      per_page: params.per_page || 10,
+      page: params.page || 1,
+      search: params.search || '',
+      sort_by: params.sort_by || 'sort_order',
+      sort_order: params.sort_order || 'asc',
+    });
+    if (params.is_active !== undefined && params.is_active !== null) {
+      queryParams.append('is_active', params.is_active);
+    }
+    const response = await apiClient.get(`/client/admin/banners?${queryParams}`);
+    return response.data;
+  },
+
+  getBanner: async (id) => {
+    const response = await apiClient.get(`/client/admin/banners/${id}`);
+    return response.data;
+  },
+
+  createBanner: async ({ title, imageFile, link_url, is_active = true, sort_order = 0, starts_at, ends_at }) => {
+    const formData = new FormData();
+    formData.append('title', title || '');
+    if (imageFile) formData.append('image', imageFile);
+    if (link_url) formData.append('link_url', link_url);
+    formData.append('is_active', is_active ? '1' : '0');
+    formData.append('sort_order', String(sort_order));
+    if (starts_at) formData.append('starts_at', starts_at);
+    if (ends_at) formData.append('ends_at', ends_at);
+    const response = await apiClient.post(`/client/admin/banners`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  updateBanner: async (id, { title, imageFile, link_url, is_active, sort_order, starts_at, ends_at }) => {
+    const formData = new FormData();
+    if (title !== undefined) formData.append('title', title);
+    if (imageFile) formData.append('image', imageFile);
+    if (link_url !== undefined) formData.append('link_url', link_url);
+    if (is_active !== undefined) formData.append('is_active', is_active ? '1' : '0');
+    if (sort_order !== undefined) formData.append('sort_order', String(sort_order));
+    if (starts_at !== undefined) formData.append('starts_at', starts_at || '');
+    if (ends_at !== undefined) formData.append('ends_at', ends_at || '');
+    const response = await apiClient.put(`/client/admin/banners/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  deleteBanner: async (id) => {
+    const response = await apiClient.delete(`/client/admin/banners/${id}`);
+    return response.data;
+  },
+
+  bulkDeleteBanners: async (ids = []) => {
+    const response = await apiClient.delete(`/client/admin/banners/bulk`, { data: { ids } });
+    return response.data;
+  },
+};
+
+// Event API methods
+export const eventAPI = {
+  getEvents: async (params = {}) => {
+    const queryParams = new URLSearchParams({
+      per_page: params.per_page || 10,
+      page: params.page || 1,
+      search: params.search || '',
+      sort_by: params.sort_by || 'sort_order',
+      sort_order: params.sort_order || 'asc',
+    });
+    if (params.is_active !== undefined && params.is_active !== null) {
+      queryParams.append('is_active', params.is_active);
+    }
+    if (params.event_type) {
+      queryParams.append('event_type', params.event_type);
+    }
+    const response = await apiClient.get(`/client/admin/events?${queryParams}`);
+    return response.data;
+  },
+
+  getEvent: async (id) => {
+    const response = await apiClient.get(`/client/admin/events/${id}`);
+    return response.data;
+  },
+
+  createEvent: async ({ title, location, event_date, event_date_end, description, link_url, event_type, is_active = true, sort_order = 0, starts_at, ends_at }) => {
+    const response = await apiClient.post(`/client/admin/events`, {
+      title,
+      location,
+      event_date,
+      event_date_end,
+      description,
+      link_url,
+      event_type,
+      is_active,
+      sort_order,
+      starts_at,
+      ends_at,
+    });
+    return response.data;
+  },
+
+  updateEvent: async (id, { title, location, event_date, event_date_end, description, link_url, event_type, is_active, sort_order, starts_at, ends_at }) => {
+    const response = await apiClient.put(`/client/admin/events/${id}`, {
+      title,
+      location,
+      event_date,
+      event_date_end,
+      description,
+      link_url,
+      event_type,
+      is_active,
+      sort_order,
+      starts_at,
+      ends_at,
+    });
+    return response.data;
+  },
+
+  deleteEvent: async (id) => {
+    const response = await apiClient.delete(`/client/admin/events/${id}`);
+    return response.data;
+  },
+
+  bulkDeleteEvents: async (ids = []) => {
+    const response = await apiClient.delete(`/client/admin/events/bulk`, { data: { ids } });
+    return response.data;
+  },
+};
+
+// Partner API methods
+export const partnerAPI = {
+  getPartners: async (params = {}) => {
+    const queryParams = new URLSearchParams({
+      per_page: params.per_page || 10,
+      page: params.page || 1,
+      search: params.search || '',
+      sort_by: params.sort_by || 'sort_order',
+      sort_order: params.sort_order || 'asc',
+    });
+    if (params.is_active !== undefined && params.is_active !== null) {
+      queryParams.append('is_active', params.is_active);
+    }
+    const response = await apiClient.get(`/client/admin/partners?${queryParams}`);
+    return response.data;
+  },
+
+  getPartner: async (id) => {
+    const response = await apiClient.get(`/client/admin/partners/${id}`);
+    return response.data;
+  },
+
+  createPartner: async ({ name, logoFile, subtitle, link_url, is_active = true, sort_order = 0 }) => {
+    const formData = new FormData();
+    formData.append('name', name || '');
+    if (logoFile) formData.append('logo', logoFile);
+    if (subtitle) formData.append('subtitle', subtitle);
+    if (link_url) formData.append('link_url', link_url);
+    formData.append('is_active', is_active ? '1' : '0');
+    formData.append('sort_order', String(sort_order));
+    const response = await apiClient.post(`/client/admin/partners`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  updatePartner: async (id, { name, logoFile, subtitle, link_url, is_active, sort_order }) => {
+    const formData = new FormData();
+    if (name !== undefined) formData.append('name', name);
+    if (logoFile) formData.append('logo', logoFile);
+    if (subtitle !== undefined) formData.append('subtitle', subtitle);
+    if (link_url !== undefined) formData.append('link_url', link_url);
+    if (is_active !== undefined) formData.append('is_active', is_active ? '1' : '0');
+    if (sort_order !== undefined) formData.append('sort_order', String(sort_order));
+    const response = await apiClient.put(`/client/admin/partners/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  deletePartner: async (id) => {
+    const response = await apiClient.delete(`/client/admin/partners/${id}`);
+    return response.data;
+  },
+
+  bulkDeletePartners: async (ids = []) => {
+    const response = await apiClient.delete(`/client/admin/partners/bulk`, { data: { ids } });
+    return response.data;
+  },
+};
+
+// Gallery API methods
+export const galleryAPI = {
+  getGalleries: async (params = {}) => {
+    const queryParams = new URLSearchParams({
+      per_page: params.per_page || 10,
+      page: params.page || 1,
+      search: params.search || '',
+      sort_by: params.sort_by || 'sort_order',
+      sort_order: params.sort_order || 'asc',
+    });
+    if (params.is_active !== undefined && params.is_active !== null) {
+      queryParams.append('is_active', params.is_active);
+    }
+    const response = await apiClient.get(`/client/admin/galleries?${queryParams}`);
+    return response.data;
+  },
+
+  getGallery: async (id) => {
+    const response = await apiClient.get(`/client/admin/galleries/${id}`);
+    return response.data;
+  },
+
+  createGallery: async ({ title, imageFile, is_active = true, sort_order = 0 }) => {
+    const formData = new FormData();
+    formData.append('title', title || '');
+    if (imageFile) formData.append('image', imageFile);
+    formData.append('is_active', is_active ? '1' : '0');
+    formData.append('sort_order', String(sort_order));
+    const response = await apiClient.post(`/client/admin/galleries`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  updateGallery: async (id, { title, imageFile, is_active, sort_order }) => {
+    const formData = new FormData();
+    if (title !== undefined) formData.append('title', title);
+    if (imageFile) formData.append('image', imageFile);
+    if (is_active !== undefined) formData.append('is_active', is_active ? '1' : '0');
+    if (sort_order !== undefined) formData.append('sort_order', String(sort_order));
+    const response = await apiClient.put(`/client/admin/galleries/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  deleteGallery: async (id) => {
+    const response = await apiClient.delete(`/client/admin/galleries/${id}`);
+    return response.data;
+  },
+
+  bulkDeleteGalleries: async (ids = []) => {
+    const response = await apiClient.delete(`/client/admin/galleries/bulk`, { data: { ids } });
+    return response.data;
+  },
+};
+
+// Newsletter API methods
+export const newsletterAPI = {
+  getNewsletters: async (params = {}) => {
+    const queryParams = new URLSearchParams({
+      per_page: params.per_page || 10,
+      page: params.page || 1,
+      search: params.search || '',
+      sort_by: params.sort_by || 'created_at',
+      sort_order: params.sort_order || 'desc',
+    });
+    const response = await apiClient.get(`/client/admin/newsletters?${queryParams}`);
+    return response.data;
+  },
+
+  getNewsletter: async (id) => {
+    const response = await apiClient.get(`/client/admin/newsletters/${id}`);
+    return response.data;
+  },
+
+  deleteNewsletter: async (id) => {
+    const response = await apiClient.delete(`/client/admin/newsletters/${id}`);
+    return response.data;
+  },
+
+  bulkDeleteNewsletters: async (ids = []) => {
+    const response = await apiClient.delete(`/client/admin/newsletters/bulk`, { data: { ids } });
+    return response.data;
+  },
+};
+
+// News API methods (AINET In News)
+export const newsAPI = {
+  getNews: async (params = {}) => {
+    const queryParams = new URLSearchParams({
+      per_page: params.per_page || 10,
+      page: params.page || 1,
+      search: params.search || '',
+      sort_by: params.sort_by || 'sort_order',
+      sort_order: params.sort_order || 'asc',
+    });
+    if (params.is_active !== undefined && params.is_active !== null) {
+      queryParams.append('is_active', params.is_active);
+    }
+    const response = await apiClient.get(`/client/admin/news?${queryParams}`);
+    return response.data;
+  },
+
+  getNewsItem: async (id) => {
+    const response = await apiClient.get(`/client/admin/news/${id}`);
+    return response.data;
+  },
+
+  createNews: async ({ location, publisher_name, publisherLogoFile, conference_name, title, summary, has_video = false, view_count = 0, link_url, published_date, is_active = true, sort_order = 0 }) => {
+    const formData = new FormData();
+    if (location) formData.append('location', location);
+    formData.append('publisher_name', publisher_name || '');
+    if (publisherLogoFile) formData.append('publisher_logo', publisherLogoFile);
+    if (conference_name) formData.append('conference_name', conference_name);
+    formData.append('title', title || '');
+    formData.append('summary', summary || '');
+    formData.append('has_video', has_video ? '1' : '0');
+    formData.append('view_count', String(view_count));
+    if (link_url) formData.append('link_url', link_url);
+    if (published_date) formData.append('published_date', published_date);
+    formData.append('is_active', is_active ? '1' : '0');
+    formData.append('sort_order', String(sort_order));
+    const response = await apiClient.post(`/client/admin/news`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  updateNews: async (id, { location, publisher_name, publisherLogoFile, conference_name, title, summary, has_video, view_count, link_url, published_date, is_active, sort_order }) => {
+    const formData = new FormData();
+    if (location !== undefined) formData.append('location', location || '');
+    if (publisher_name !== undefined) formData.append('publisher_name', publisher_name);
+    if (publisherLogoFile) formData.append('publisher_logo', publisherLogoFile);
+    if (conference_name !== undefined) formData.append('conference_name', conference_name || '');
+    if (title !== undefined) formData.append('title', title);
+    if (summary !== undefined) formData.append('summary', summary);
+    if (has_video !== undefined) formData.append('has_video', has_video ? '1' : '0');
+    if (view_count !== undefined) formData.append('view_count', String(view_count));
+    if (link_url !== undefined) formData.append('link_url', link_url || '');
+    if (published_date !== undefined) formData.append('published_date', published_date || '');
+    if (is_active !== undefined) formData.append('is_active', is_active ? '1' : '0');
+    if (sort_order !== undefined) formData.append('sort_order', String(sort_order));
+    const response = await apiClient.put(`/client/admin/news/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  deleteNews: async (id) => {
+    const response = await apiClient.delete(`/client/admin/news/${id}`);
+    return response.data;
+  },
+
+  bulkDeleteNews: async (ids = []) => {
+    const response = await apiClient.delete(`/client/admin/news/bulk`, { data: { ids } });
+    return response.data;
+  },
+};
+
+// Public website API methods
+export const websiteAPI = {
+  getBanners: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.limit) {
+      queryParams.append('limit', params.limit);
+    }
+    const response = await axios.get(`${baseUrl}/client/banners${queryParams.toString() ? '?' + queryParams : ''}`);
+    return response.data;
+  },
+
+  getConference: async () => {
+    const response = await axios.get(`${baseUrl}/client/conference`);
+    return response.data;
+  },
+
+  getPartners: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.limit) {
+      queryParams.append('limit', params.limit);
+    }
+    const response = await axios.get(`${baseUrl}/client/partners${queryParams.toString() ? '?' + queryParams : ''}`);
+    return response.data;
+  },
+
+  getEvents: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.limit) {
+      queryParams.append('limit', params.limit);
+    }
+    if (params.event_type) {
+      queryParams.append('event_type', params.event_type);
+    }
+    if (params.exclude_conference !== undefined) {
+      queryParams.append('exclude_conference', params.exclude_conference);
+    }
+    const response = await axios.get(`${baseUrl}/client/events${queryParams.toString() ? '?' + queryParams : ''}`);
+    return response.data;
+  },
+
+  getGalleries: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.limit) {
+      queryParams.append('limit', params.limit);
+    }
+    const response = await axios.get(`${baseUrl}/client/galleries${queryParams.toString() ? '?' + queryParams : ''}`);
+    return response.data;
+  },
+
+  subscribeNewsletter: async ({ name, email, whatsapp_no }) => {
+    const response = await axios.post(`${baseUrl}/client/newsletter/subscribe`, {
+      name,
+      email,
+      whatsapp_no,
+    });
+    return response.data;
+  },
+
+  getNews: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.limit) {
+      queryParams.append('limit', params.limit);
+    }
+    const response = await axios.get(`${baseUrl}/client/news${queryParams.toString() ? '?' + queryParams : ''}`);
+    return response.data;
+  },
+};
+
 export default apiClient;

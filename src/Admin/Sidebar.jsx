@@ -16,6 +16,8 @@ import {
   FileText,
   ClipboardList,
   UserCog,
+  Image,
+  Mail,
 } from 'lucide-react';
 import { IoHome } from "react-icons/io5";
 import { useAuth } from '../context/AuthContext';
@@ -82,6 +84,12 @@ const Sidebar = ({ isOpen, onClose }) => {
      { icon: FileText, label: 'PPFs', path: '/admin/ppfs' },
      { icon: ClipboardList, label: 'DRFs', path: '/admin/drfs' },
      { icon: UserCog, label: 'Memberships', path: '/admin/memberships' },
+     { icon: IoHome, label: 'Banners', path: '/admin/banners' },
+     { icon: Calendar, label: 'Events', path: '/admin/events' },
+     { icon: Users, label: 'Partners', path: '/admin/partners' },
+     { icon: Image, label: 'Gallery', path: '/admin/galleries' },
+     { icon: Mail, label: 'Newsletters', path: '/admin/newsletters' },
+     { icon: Newspaper, label: 'News', path: '/admin/news-management' },
   ];
 
   // Auto-open dropdown if current path belongs to a subItem

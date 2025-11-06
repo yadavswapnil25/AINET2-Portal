@@ -1,236 +1,87 @@
-import React, { useState } from "react";
-import { Pencil, Trash2, X, Plus } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Pencil, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { websiteAPI } from "../../utils/api";
 
 const Gallery = () => {
-  const [banners, setBanners] = useState([
-    { url: "https://via.placeholder.com/600x200" },
-    { url: "https://via.placeholder.com/600x200?text=Banner+2" },
-  ]);
+  const [galleries, setGalleries] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const [gridImages, setGridImages] = useState([
-    { url: "https://via.placeholder.com/200" },
-    { url: "https://via.placeholder.com/200?text=Grid+2" },
-    { url: "https://via.placeholder.com/200?text=Grid+3" },
-  ]);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentSection, setCurrentSection] = useState(""); // "banner" | "grid"
-  const [currentIndex, setCurrentIndex] = useState(null);
-  const [tempImage, setTempImage] = useState({ url: "" });
-
-  // Open modal for Add or Edit
-  const openModal = (section, index = null) => {
-    setCurrentSection(section);
-    setCurrentIndex(index);
-    if (index !== null) {
-      setTempImage(section === "banner" ? banners[index] : gridImages[index]);
-    } else {
-      setTempImage({ url: "" });
-    }
-    setIsModalOpen(true);
-  };
-
-  // Save image (Add or Edit)
-  const handleSave = () => {
-    if (currentSection === "banner") {
-      const updated = [...banners];
-      if (currentIndex !== null) {
-        updated[currentIndex] = tempImage; // Update
-      } else {
-        updated.push(tempImage); // Add new
+  useEffect(() => {
+    const fetchGalleries = async () => {
+      try {
+        setIsLoading(true);
+        const response = await websiteAPI.getGalleries();
+        if (response.status && response.data.galleries) {
+          setGalleries(response.data.galleries);
+        }
+      } catch (error) {
+        console.error("Failed to fetch galleries:", error);
+        toast.error("Failed to load galleries");
+      } finally {
+        setIsLoading(false);
       }
-      setBanners(updated);
-    } else {
-      const updated = [...gridImages];
-      if (currentIndex !== null) {
-        updated[currentIndex] = tempImage;
-      } else {
-        updated.push(tempImage);
-      }
-      setGridImages(updated);
-    }
-    setIsModalOpen(false);
-  };
+    };
 
-  // Delete image
-  const handleDelete = (section, index) => {
-    if (window.confirm("Are you sure you want to delete this image?")) {
-      if (section === "banner") {
-        setBanners(banners.filter((_, i) => i !== index));
-      } else {
-        setGridImages(gridImages.filter((_, i) => i !== index));
-      }
-    }
-  };
+    fetchGalleries();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <p className="text-gray-500">Loading galleries...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className=" relative">
+    <div className="relative">
       <h2 className="text-2xl font-semibold text-gray-800 mb-6">Our Gallery</h2>
 
-      {/* Banner Section */}
-      <div className="mb-10">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-gray-700">
-            Horizontal Banners
-          </h3>
+      {galleries.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500 mb-4">No galleries available</p>
           <button
-            onClick={() => openModal("banner")}
-            className="flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg shadow"
+            onClick={() => navigate("/admin/galleries")}
+            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm"
           >
-            <Plus size={16} className="mr-2" /> Add Banner
+            Add Gallery Images
           </button>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full border border-slate-300 rounded-lg">
-            <thead>
-              <tr className="bg-slate-200 text-left">
-                <th className="p-3 border">Preview</th>
-                <th className="p-3 border text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {banners.map((banner, index) => (
-                <tr key={index} className="hover:bg-slate-100">
-                  <td className="p-3 border">
-                    <img
-                      src={banner.url}
-                      alt={`Banner ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-md"
-                    />
-                  </td>
-                  <td className="p-3 border">
-                    <div className="flex items-center justify-center space-x-3">
-                      <button
-                        onClick={() => openModal("banner", index)}
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete("banner", index)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Grid Images Section */}
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-gray-700">Grid Images</h3>
-          <button
-            onClick={() => openModal("grid")}
-            className="flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg shadow"
-          >
-            <Plus size={16} className="mr-2" /> Add Image
-          </button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full border border-slate-300 rounded-lg">
-            <thead>
-              <tr className="bg-slate-200 text-left">
-                <th className="p-3 border">Preview</th>
-                <th className="p-3 border text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {gridImages.map((img, index) => (
-                <tr key={index} className="hover:bg-slate-100">
-                  <td className="p-3 border">
-                    <img
-                      src={img.url}
-                      alt={`Grid ${index + 1}`}
-                      className="w-24 h-24 object-cover rounded-md"
-                    />
-                  </td>
-                  <td className="p-3 border">
-                    <div className="flex items-center justify-center space-x-3">
-                      <button
-                        onClick={() => openModal("grid", index)}
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete("grid", index)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Image Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-[420px] relative">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
-            >
-              <X size={20} />
-            </button>
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              {currentIndex !== null ? "Update Image" : "Add Image"}
-            </h3>
-            <label className="block mb-4">
-              <span className="text-sm font-medium text-gray-700">
-                Image Upload
-              </span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    setTempImage({
-                      ...tempImage,
-                      url: URL.createObjectURL(file),
-                    });
-                  }
-                }}
-                className="w-full border border-gray-300 rounded-md p-2 cursor-pointer"
-              />
-            </label>
-
-            {tempImage.url && (
-              <div className="mb-4">
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {galleries.map((gallery) => (
+            <div key={gallery.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="relative">
                 <img
-                  src={tempImage.url}
-                  alt="Preview"
-                  className="w-full h-40 object-cover rounded-md"
+                  src={gallery.image_url || "https://via.placeholder.com/400x300"}
+                  alt={gallery.title}
+                  className="w-full h-48 object-cover"
                 />
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <button
+                    onClick={() => navigate(`/admin/galleries`)}
+                    className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+                    title="Edit"
+                  >
+                    <Pencil size={16} className="text-blue-600" />
+                  </button>
+                  <button
+                    onClick={() => navigate(`/admin/galleries`)}
+                    className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+                    title="Delete"
+                  >
+                    <Trash2 size={16} className="text-red-600" />
+                  </button>
+                </div>
               </div>
-            )}
-
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
-              >
-                Save
-              </button>
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-gray-800">{gallery.title}</h3>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       )}
     </div>

@@ -147,11 +147,16 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 };
 
 // Main User Table Component
-const Table = ({ users, onDelete, currentPage, totalPages, onPageChange }) => {
+const Table = ({ users, onEdit, onDelete, currentPage, totalPages, onPageChange }) => {
   const navigate = useNavigate();
 
   const handleEdit = (user) => {
-    navigate(`/admin/edit/${user.id}`);
+    // Use onEdit prop if provided, otherwise navigate
+    if (onEdit) {
+      onEdit(user);
+    } else {
+      navigate(`/admin/edit/${user.id}`);
+    }
   };
 
   return (

@@ -633,6 +633,58 @@ export const newsAPI = {
   },
 };
 
+// User API methods
+export const userAPI = {
+  // Get all users
+  getUsers: async (params = {}) => {
+    const queryParams = new URLSearchParams({
+      per_page: params.per_page || 10,
+      page: params.page || 1,
+      search: params.search || '',
+      sort_by: params.sort_by || 'created_at',
+      sort_order: params.sort_order || 'desc',
+    });
+    const response = await apiClient.get(`/client/admin/users?${queryParams}`);
+    return response.data;
+  },
+
+  // Get single user
+  getUser: async (id) => {
+    const response = await apiClient.get(`/client/admin/users/${id}`);
+    return response.data;
+  },
+
+  // Get user statistics
+  getUserStats: async () => {
+    const response = await apiClient.get(`/client/admin/users/stats`);
+    return response.data;
+  },
+
+  // Create user
+  createUser: async (userData) => {
+    const response = await apiClient.post(`/client/admin/users`, userData);
+    return response.data;
+  },
+
+  // Update user
+  updateUser: async (id, userData) => {
+    const response = await apiClient.put(`/client/admin/users/${id}`, userData);
+    return response.data;
+  },
+
+  // Delete user
+  deleteUser: async (id) => {
+    const response = await apiClient.delete(`/client/admin/users/${id}`);
+    return response.data;
+  },
+
+  // Bulk delete users
+  bulkDeleteUsers: async (ids = []) => {
+    const response = await apiClient.delete(`/client/admin/users/bulk`, { data: { ids } });
+    return response.data;
+  },
+};
+
 // Public website API methods
 export const websiteAPI = {
   getBanners: async (params = {}) => {

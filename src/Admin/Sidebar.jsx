@@ -39,17 +39,15 @@ const Sidebar = ({ isOpen, onClose }) => {
       label: 'Dashboard', 
       path: '/admin/dashboard' 
     },
+    { 
+      icon: User, 
+      label: 'User Management', 
+      path: '/admin/users' 
+    },
     // { 
     //   icon: User, 
     //   label: 'Profile', 
     //   path: '/admin/profile' 
-    // },
-    // { 
-    //   icon: Users, 
-    //   label: 'User Management', 
-    //   subItems: [
-    //     { label: 'All Users', path: '/admin/users' },
-    //   ] 
     // },
     // { 
     //   icon: IoHome, 

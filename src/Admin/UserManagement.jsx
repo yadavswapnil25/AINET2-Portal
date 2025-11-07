@@ -4,6 +4,7 @@ import { Search, Plus } from 'lucide-react';
 import { userAPI } from '../utils/api';
 import Table from './Table';
 import UserModal from './UserModal';
+import { useDebounce } from '../utils/useDebounce';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -11,6 +12,7 @@ const UserManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [selectedUser, setSelectedUser] = useState(null);
@@ -84,21 +86,8 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
-    fetchUsers(currentPage, searchTerm);
-  }, [currentPage]);
-
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (currentPage === 1) {
-        fetchUsers(1, searchTerm);
-      } else {
-        setCurrentPage(1);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+    fetchUsers(currentPage, debouncedSearchTerm);
+  }, [currentPage, debouncedSearchTerm]);
 
   const handleDelete = async (userToDelete) => {
     if (!window.confirm(`Are you sure you want to delete user "${userToDelete.name}"?`)) {
@@ -275,7 +264,10 @@ const UserManagement = () => {
             type="text"
             placeholder="Search users by name, email, mobile..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
           />
         </div>

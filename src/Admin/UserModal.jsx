@@ -1,7 +1,15 @@
 import React from 'react';
 import { X } from 'lucide-react';
 
-const UserModal = ({ showModal, setShowModal, modalMode, formData, setFormData, handleSubmit }) => {
+const UserModal = ({
+  showModal,
+  setShowModal,
+  modalMode,
+  formData,
+  setFormData,
+  handleSubmit,
+  roleOptions = [],
+}) => {
   if (!showModal) return null;
 
   const handleChange = (e) => {
@@ -69,6 +77,28 @@ const UserModal = ({ showModal, setShowModal, modalMode, formData, setFormData, 
                       required
                     />
                   </div>
+                </div>
+
+                <div className="mt-4">
+                  <label htmlFor="role_id" className="block text-sm font-medium text-gray-700">
+                    Role
+                  </label>
+                  <select
+                    name="role_id"
+                    id="role_id"
+                    value={formData.role_id}
+                    onChange={handleChange}
+                    className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+                  >
+                    {roleOptions.map((option) => (
+                      <option key={option.value || 'default-role-option'} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Select <span className="font-medium">Administrator</span> for users who need full access to the admin dashboard.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mt-4">

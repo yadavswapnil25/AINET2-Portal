@@ -53,9 +53,10 @@ const StatusBadge = ({ status }) => {
 // Role Badge Component
 const RoleBadge = ({ role }) => {
   const colors = {
-    'Admin': 'bg-purple-100 text-purple-800',
-    'Manager': 'bg-blue-100 text-blue-800',
-    'User': 'bg-gray-100 text-gray-800'
+    Admin: 'bg-purple-100 text-purple-800',
+    Manager: 'bg-blue-100 text-blue-800',
+    Owner: 'bg-orange-100 text-orange-800',
+    User: 'bg-gray-100 text-gray-800',
   };
 
   return (

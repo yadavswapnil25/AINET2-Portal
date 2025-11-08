@@ -6,6 +6,25 @@ import Table from './Table';
 import UserModal from './UserModal';
 import { useDebounce } from '../utils/useDebounce';
 
+const ROLE_OPTIONS = [
+  { value: '', label: 'Select role' },
+  { value: '1', label: 'Administrator' },
+  { value: '2', label: 'User' },
+  { value: '3', label: 'Owner' },
+];
+
+const getRoleLabel = (roleId) => {
+  switch (roleId) {
+    case 1:
+      return 'Admin';
+    case 3:
+      return 'Owner';
+    case 2:
+    default:
+      return 'User';
+  }
+};
+
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,6 +51,7 @@ const UserManagement = () => {
     membership_type: '',
     membership_plan: '',
     m_id: '',
+    role_id: '',
   });
 
   const fetchUsers = async (page = 1, search = '') => {
@@ -52,7 +72,7 @@ const UserManagement = () => {
           name: user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
           email: user.email,
           phone: user.mobile || user.whatsapp_no || 'N/A',
-          role: user.membership_type || 'User',
+          role: getRoleLabel(user.role_id),
           department: user.state || user.district || 'N/A',
           status: user.deleted_at ? 'inactive' : 'active',
           joinDate: user.created_at 
@@ -129,6 +149,7 @@ const UserManagement = () => {
       membership_type: originalUser.membership_type || '',
       membership_plan: originalUser.membership_plan || '',
       m_id: originalUser.m_id || '',
+      role_id: originalUser.role_id ? String(originalUser.role_id) : '',
     });
     setShowModal(true);
   };
@@ -152,6 +173,7 @@ const UserManagement = () => {
       membership_type: '',
       membership_plan: '',
       m_id: '',
+      role_id: '',
     });
     setShowModal(true);
   };
@@ -196,7 +218,8 @@ const UserManagement = () => {
         district: formData.district,
         membership_type: formData.membership_type,
         membership_plan: formData.membership_plan,
-        m_id: formData.m_id,
+      m_id: formData.m_id,
+      role_id: formData.role_id ? Number(formData.role_id) : null,
       };
 
       // Only include password if provided (for new users or password updates)
@@ -214,7 +237,7 @@ const UserManagement = () => {
       if (response.status) {
         toast.success(`User ${modalMode === 'add' ? 'created' : 'updated'} successfully!`);
         setShowModal(false);
-        fetchUsers(currentPage, searchTerm);
+        fetchUsers(currentPage, debouncedSearchTerm);
       } else {
         toast.error(response.message || `Failed to ${modalMode === 'add' ? 'create' : 'update'} user`);
       }
@@ -299,6 +322,7 @@ const UserManagement = () => {
         formData={formData}
         setFormData={setFormData}
         handleSubmit={handleSubmit}
+        roleOptions={ROLE_OPTIONS}
       />
     </div>
   );

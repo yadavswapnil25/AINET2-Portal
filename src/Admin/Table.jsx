@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -148,8 +148,35 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 };
 
 // Main User Table Component
-const Table = ({ users, onEdit, onDelete, currentPage, totalPages, onPageChange }) => {
+const Table = ({
+  users,
+  onEdit,
+  onDelete,
+  currentPage,
+  totalPages,
+  onPageChange,
+  selectedUserIds = [],
+  onToggleSelect = () => {},
+  onToggleSelectAll = () => {},
+  enableSelection = true,
+}) => {
   const navigate = useNavigate();
+  const headerCheckboxRef = useRef(null);
+
+  const allSelected =
+    enableSelection &&
+    users.length > 0 &&
+    users.every((user) => selectedUserIds.includes(user.id));
+  const someSelected =
+    enableSelection &&
+    users.some((user) => selectedUserIds.includes(user.id)) &&
+    !allSelected;
+
+  useEffect(() => {
+    if (enableSelection && headerCheckboxRef.current) {
+      headerCheckboxRef.current.indeterminate = someSelected;
+    }
+  }, [someSelected, allSelected, enableSelection]);
 
   const handleEdit = (user) => {
     // Use onEdit prop if provided, otherwise navigate
@@ -170,6 +197,17 @@ const Table = ({ users, onEdit, onDelete, currentPage, totalPages, onPageChange 
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              {enableSelection && (
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <input
+                    type="checkbox"
+                    ref={headerCheckboxRef}
+                    checked={allSelected}
+                    onChange={onToggleSelectAll}
+                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  />
+                </th>
+              )}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ID
               </th>
@@ -201,7 +239,22 @@ const Table = ({ users, onEdit, onDelete, currentPage, totalPages, onPageChange 
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+              <tr
+                key={user.id}
+                className={`transition-colors ${
+                  enableSelection && selectedUserIds.includes(user.id) ? 'bg-teal-50' : 'hover:bg-gray-50'
+                }`}
+              >
+                {enableSelection && (
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedUserIds.includes(user.id)}
+                      onChange={() => onToggleSelect(user.id)}
+                      className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                    />
+                  </td>
+                )}
                 <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                   {user.id}
                 </td>

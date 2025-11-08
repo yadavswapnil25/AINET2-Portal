@@ -9,17 +9,48 @@ const UserModal = ({
   setFormData,
   handleSubmit,
   roleOptions = [],
+  errors = {},
+  onClose,
+  setErrors,
 }) => {
+  const defaultRoleOptions = [
+    { value: '', label: 'Select role' },
+    { value: '1', label: 'Administrator' },
+    { value: '2', label: 'User' },
+    { value: '3', label: 'Owner' },
+  ];
+
+  const resolvedRoleOptions = roleOptions.length ? roleOptions : defaultRoleOptions;
+
   if (!showModal) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    if (setErrors && errors?.[name]) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
+      });
+    }
   };
 
   const handleClose = () => {
     setShowModal(false);
+    if (onClose) {
+      onClose();
+    }
   };
+
+  const getError = (field) => errors?.[field]?.[0];
+
+  const inputClasses = (field) =>
+    `block w-full px-3 py-2 mt-1 border rounded-lg shadow-sm text-sm focus:outline-none ${
+      getError(field)
+        ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500'
+        : 'border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500'
+    }`;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -57,9 +88,10 @@ const UserModal = ({
                       id="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+                      className={inputClasses('name')}
                       placeholder="Enter full name"
                     />
+                    {getError('name') && <p className="mt-1 text-xs text-red-600">{getError('name')}</p>}
                   </div>
 
                   <div>
@@ -72,10 +104,11 @@ const UserModal = ({
                       id="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+                      className={inputClasses('email')}
                       placeholder="Enter email address"
                       required
                     />
+                    {getError('email') && <p className="mt-1 text-xs text-red-600">{getError('email')}</p>}
                   </div>
                 </div>
 
@@ -88,14 +121,15 @@ const UserModal = ({
                     id="role_id"
                     value={formData.role_id}
                     onChange={handleChange}
-                    className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+                    className={inputClasses('role_id')}
                   >
-                    {roleOptions.map((option) => (
+                    {resolvedRoleOptions.map((option) => (
                       <option key={option.value || 'default-role-option'} value={option.value}>
                         {option.label}
                       </option>
                     ))}
                   </select>
+                  {getError('role_id') && <p className="mt-1 text-xs text-red-600">{getError('role_id')}</p>}
                   <p className="mt-1 text-xs text-gray-500">
                     Select <span className="font-medium">Administrator</span> for users who need full access to the admin dashboard.
                   </p>
@@ -143,13 +177,14 @@ const UserModal = ({
                     id="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+                    className={inputClasses('password')}
                     placeholder={modalMode === 'add' ? 'Enter password (min 8 characters)' : 'Leave blank to keep current password'}
                     required={modalMode === 'add'}
                   />
                   {modalMode === 'edit' && (
                     <p className="mt-1 text-xs text-gray-500">Leave blank to keep current password</p>
                   )}
+                  {getError('password') && <p className="mt-1 text-xs text-red-600">{getError('password')}</p>}
                 </div>
               </div>
 
@@ -324,9 +359,10 @@ const UserModal = ({
                     id="m_id"
                     value={formData.m_id}
                     onChange={handleChange}
-                    className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:ring-teal-500 focus:border-teal-500 text-sm"
+                    className={inputClasses('m_id')}
                     placeholder="Enter membership ID"
                   />
+                  {getError('m_id') && <p className="mt-1 text-xs text-red-600">{getError('m_id')}</p>}
                 </div>
               </div>
             </div>

@@ -53,6 +53,8 @@ const UserManagement = () => {
     m_id: '',
     role_id: '',
   });
+  const [errors, setErrors] = useState({});
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
 
   const fetchUsers = async (page = 1, search = '') => {
     try {
@@ -92,6 +94,9 @@ const UserManagement = () => {
         }));
 
         setUsers(mappedUsers);
+        setSelectedUserIds((prevSelected) =>
+          prevSelected.filter((id) => mappedUsers.some((user) => user.id === id))
+        );
         setTotalPages(response.data.pagination?.last_page || 1);
         setCurrentPage(response.data.pagination?.current_page || 1);
       } else {
@@ -119,7 +124,8 @@ const UserManagement = () => {
       
       if (response.status) {
         toast.success('User deleted successfully');
-        fetchUsers(currentPage, searchTerm);
+        setSelectedUserIds((prevSelected) => prevSelected.filter((id) => id !== userToDelete.id));
+        fetchUsers(currentPage, debouncedSearchTerm);
       } else {
         toast.error(response.message || 'Failed to delete user');
       }
@@ -133,6 +139,7 @@ const UserManagement = () => {
     const originalUser = user.originalData || user;
     setModalMode('edit');
     setSelectedUser(originalUser);
+    setErrors({});
     setFormData({
       name: originalUser.name || '',
       first_name: originalUser.first_name || '',
@@ -157,6 +164,7 @@ const UserManagement = () => {
   const handleAddUser = () => {
     setModalMode('add');
     setSelectedUser(null);
+    setErrors({});
     setFormData({
       name: '',
       first_name: '',
@@ -178,28 +186,94 @@ const UserManagement = () => {
     setShowModal(true);
   };
 
+  const handleToggleSelectUser = (userId) => {
+    setSelectedUserIds((prevSelected) =>
+      prevSelected.includes(userId)
+        ? prevSelected.filter((id) => id !== userId)
+        : [...prevSelected, userId]
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    const currentPageIds = users.map((user) => user.id);
+    const allSelected =
+      currentPageIds.length > 0 && currentPageIds.every((id) => selectedUserIds.includes(id));
+
+    if (allSelected) {
+      setSelectedUserIds((prevSelected) => prevSelected.filter((id) => !currentPageIds.includes(id)));
+    } else {
+      setSelectedUserIds((prevSelected) => Array.from(new Set([...prevSelected, ...currentPageIds])));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedUserIds.length === 0) {
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete ${selectedUserIds.length} selected user(s)?`)) {
+      return;
+    }
+
+    try {
+      const response = await userAPI.bulkDeleteUsers(selectedUserIds);
+
+      if (response.status) {
+        toast.success(`${selectedUserIds.length} user(s) deleted successfully`);
+        setSelectedUserIds([]);
+        fetchUsers(currentPage, debouncedSearchTerm);
+      } else {
+        toast.error(response.message || 'Failed to delete selected users');
+      }
+    } catch (error) {
+      console.error('Error deleting selected users:', error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.errors?.message ||
+        error.message ||
+        'Failed to delete selected users';
+      toast.error(errorMessage);
+    }
+  };
+
   const handleSubmit = async () => {
+    setErrors({});
     // Basic validation
     if (!formData.email) {
-      toast.error('Email is required');
+      const errorMessage = 'Email is required';
+      setErrors({ email: [errorMessage] });
+      toast.error(errorMessage);
       return;
     }
 
     if (modalMode === 'add' && !formData.password) {
-      toast.error('Password is required for new users');
+      const errorMessage = 'Password is required for new users';
+      setErrors({ password: [errorMessage] });
+      toast.error(errorMessage);
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      toast.error('Please enter a valid email address');
+      const errorMessage = 'Please enter a valid email address';
+      setErrors({ email: [errorMessage] });
+      toast.error(errorMessage);
       return;
     }
 
     // Password validation for new users
     if (modalMode === 'add' && formData.password.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      const errorMessage = 'Password must be at least 8 characters';
+      setErrors({ password: [errorMessage] });
+      toast.error(errorMessage);
+      return;
+    }
+
+    if (!formData.role_id) {
+      const errorMessage = 'Role is required';
+      setErrors({ role_id: [errorMessage] });
+      toast.error(errorMessage);
       return;
     }
 
@@ -236,6 +310,7 @@ const UserManagement = () => {
 
       if (response.status) {
         toast.success(`User ${modalMode === 'add' ? 'created' : 'updated'} successfully!`);
+        setErrors({});
         setShowModal(false);
         fetchUsers(currentPage, debouncedSearchTerm);
       } else {
@@ -243,10 +318,29 @@ const UserManagement = () => {
       }
     } catch (error) {
       console.error('Error saving user:', error);
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.errors?.email?.[0] ||
-                          `Failed to ${modalMode === 'add' ? 'create' : 'update'} user`;
-      toast.error(errorMessage);
+      let validationErrors = error.response?.data?.errors;
+      if (typeof validationErrors === 'string') {
+        try {
+          validationErrors = JSON.parse(validationErrors);
+        } catch (parseError) {
+          console.error('Failed to parse validation errors', parseError);
+        }
+      }
+      if (error.response?.status === 422 && validationErrors && typeof validationErrors === 'object') {
+        setErrors(validationErrors);
+        const firstError = Object.values(validationErrors)[0]?.[0];
+        if (firstError) {
+          toast.error(firstError);
+        } else {
+          toast.error('Validation failed. Please check the highlighted fields.');
+        }
+      } else {
+        const errorMessage =
+          error.response?.data?.message ||
+          error.message ||
+          `Failed to ${modalMode === 'add' ? 'create' : 'update'} user`;
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -270,13 +364,26 @@ const UserManagement = () => {
           <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
           <p className="text-sm text-gray-600">Manage your users and their permissions</p>
         </div>
-        <button
-          onClick={handleAddUser}
-          className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors shadow"
-        >
-          <Plus size={16} />
-          <span>Add User</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={handleBulkDelete}
+            disabled={selectedUserIds.length === 0}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow flex items-center space-x-2 ${
+              selectedUserIds.length === 0
+                ? 'bg-red-100 text-red-300 cursor-not-allowed'
+                : 'bg-red-500 hover:bg-red-600 text-white'
+            }`}
+          >
+            <span>Delete Selected{selectedUserIds.length > 0 ? ` (${selectedUserIds.length})` : ''}</span>
+          </button>
+          <button
+            onClick={handleAddUser}
+            className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors shadow"
+          >
+            <Plus size={16} />
+            <span>Add User</span>
+          </button>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -306,6 +413,9 @@ const UserManagement = () => {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
+            selectedUserIds={selectedUserIds}
+            onToggleSelect={handleToggleSelectUser}
+            onToggleSelectAll={handleToggleSelectAll}
           />
         ) : (
           <div className="p-8 text-center">
@@ -323,6 +433,9 @@ const UserManagement = () => {
         setFormData={setFormData}
         handleSubmit={handleSubmit}
         roleOptions={ROLE_OPTIONS}
+        errors={errors}
+        onClose={() => setErrors({})}
+        setErrors={setErrors}
       />
     </div>
   );

@@ -6,7 +6,7 @@ export const membershipService = {
    */
   getMembershipList: async (params = {}) => {
     try {
-      const response = await apiClient.get('/client/admin/memberships', { params });
+      const response = await apiClient.get('/admin/memberships', { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching memberships:', error);

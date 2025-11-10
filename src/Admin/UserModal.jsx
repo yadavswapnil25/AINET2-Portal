@@ -349,6 +349,26 @@ const UserModal = ({
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label htmlFor="addMonths" className="block text-sm font-medium text-gray-700">
+                      Membership Validity (Months)
+                    </label>
+                    <input
+                      type="number"
+                      name="addMonths"
+                      id="addMonths"
+                      min="0"
+                      step="1"
+                      value={formData.addMonths ?? ''}
+                      onChange={handleChange}
+                      className={inputClasses('addMonths')}
+                      placeholder="e.g., 12"
+                    />
+                    {getError('addMonths') && <p className="mt-1 text-xs text-red-600">{getError('addMonths')}</p>}
+                  </div>
+                </div>
+
                 <div className="mt-4">
                   <label htmlFor="m_id" className="block text-sm font-medium text-gray-700">
                     Membership ID

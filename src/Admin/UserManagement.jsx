@@ -52,6 +52,7 @@ const UserManagement = () => {
     membership_plan: '',
     m_id: '',
     role_id: '',
+    addMonths: '',
   });
   const [errors, setErrors] = useState({});
   const [selectedUserIds, setSelectedUserIds] = useState([]);
@@ -157,6 +158,17 @@ const UserManagement = () => {
       membership_plan: originalUser.membership_plan || '',
       m_id: originalUser.m_id || '',
       role_id: originalUser.role_id ? String(originalUser.role_id) : '',
+      addMonths: (() => {
+        const rawValue =
+          originalUser.addMonths ??
+          originalUser.add_months ??
+          originalUser.membership_validity_months ??
+          originalUser.membership_duration_months ??
+          originalUser.validity_months ??
+          originalUser.duration_months;
+        if (rawValue === null || rawValue === undefined || rawValue === '') return '';
+        return String(rawValue);
+      })(),
     });
     setShowModal(true);
   };
@@ -182,6 +194,7 @@ const UserManagement = () => {
       membership_plan: '',
       m_id: '',
       role_id: '',
+      addMonths: '',
     });
     setShowModal(true);
   };
@@ -277,6 +290,18 @@ const UserManagement = () => {
       return;
     }
 
+    const parsedAddMonths =
+      formData.addMonths === '' || formData.addMonths === null
+        ? null
+        : Number(formData.addMonths);
+
+    if (formData.addMonths !== '' && (Number.isNaN(parsedAddMonths) || parsedAddMonths < 0)) {
+      const errorMessage = 'Membership validity (months) must be a non-negative number';
+      setErrors({ addMonths: [errorMessage] });
+      toast.error(errorMessage);
+      return;
+    }
+
     try {
       const userData = {
         name: formData.name || `${formData.first_name} ${formData.last_name}`.trim(),
@@ -294,6 +319,7 @@ const UserManagement = () => {
         membership_plan: formData.membership_plan,
       m_id: formData.m_id,
       role_id: formData.role_id ? Number(formData.role_id) : null,
+      addMonths: parsedAddMonths,
       };
 
       // Only include password if provided (for new users or password updates)

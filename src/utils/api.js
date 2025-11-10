@@ -213,7 +213,7 @@ export const ppfAPI = {
 
   // Bulk delete PPFs
   bulkDeletePPFs: async (ids = []) => {
-    const response = await apiClient.post(`/client/admin/ppf/bulk`, { ids });
+    const response = await apiClient.post(`/client/admin/ppf/bulk`, { data: { ids } });
     return response.data;
   },
 };

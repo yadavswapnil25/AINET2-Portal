@@ -115,13 +115,16 @@ const PPFManagement = () => {
     if (selectedIds.length === ppfs.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(ppfs.map((p) => p.id));
+      setSelectedIds(ppfs.map((p) => Number(p.id)).filter((id) => Number.isFinite(id)));
     }
   };
 
   const toggleSelect = (id) => {
+    const numericId = Number(id);
+    if (!Number.isFinite(numericId)) return;
+
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(numericId) ? prev.filter((x) => x !== numericId) : [...prev, numericId]
     );
   };
 
@@ -142,17 +145,26 @@ const PPFManagement = () => {
   };
 
   const confirmDelete = async () => {
-    const ids = confirmState.ids;
+    const normalizedIds = (confirmState.ids || [])
+      .map((id) => Number(id))
+      .filter((id) => Number.isFinite(id));
+
+    if (!normalizedIds.length) {
+      toast.error('No valid PPF records selected');
+      setConfirmState({ open: false, ids: [], message: '', confirming: false });
+      return;
+    }
+
     setConfirmState((s) => ({ ...s, confirming: true }));
     try {
       let res;
-      if (ids.length === 1) {
-        res = await ppfAPI.deletePPF(ids[0]);
+      if (normalizedIds.length === 1) {
+        res = await ppfAPI.deletePPF(normalizedIds[0]);
       } else {
-        res = await ppfAPI.bulkDeletePPFs(ids);
+        res = await ppfAPI.bulkDeletePPFs(normalizedIds);
       }
       if (res.status) {
-        toast.success(ids.length === 1 ? 'Deleted successfully' : 'Selected records deleted');
+        toast.success(normalizedIds.length === 1 ? 'Deleted successfully' : 'Selected records deleted');
         setSelectedIds([]);
         fetchPPFs();
       } else {
@@ -160,7 +172,13 @@ const PPFManagement = () => {
       }
     } catch (e) {
       console.error(e);
-      toast.error('Delete failed');
+      const apiMessage = e?.response?.data?.message || e?.response?.data?.errors?.message;
+      if (apiMessage && apiMessage.toLowerCase().includes('not found')) {
+        toast('Some records were already deleted. Refreshing list...', { icon: 'ℹ️' });
+        fetchPPFs();
+      } else {
+        toast.error(apiMessage || 'Delete failed');
+      }
     } finally {
       setConfirmState({ open: false, ids: [], message: '', confirming: false });
     }

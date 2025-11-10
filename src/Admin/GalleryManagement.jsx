@@ -436,6 +436,7 @@ const GalleryManagement = () => {
                     )}
                   </div>
                 </div>
+              </div>
             </div>
             <div className="p-4 border-t flex justify-end gap-2">
               <button onClick={()=> setModalOpen(false)} className="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">Cancel</button>

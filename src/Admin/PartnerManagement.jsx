@@ -27,6 +27,7 @@ const PartnerManagement = () => {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', subtitle: '', link_url: '', is_active: true, sort_order: 0 });
   const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState('');
 
   const [confirmState, setConfirmState] = useState({ open: false, ids: [], message: '', confirming: false });
 
@@ -56,6 +57,14 @@ const PartnerManagement = () => {
 
   useEffect(() => { fetchPartners(); }, [currentPage, perPage, searchTerm, sortBy, sortOrder, isActive]);
 
+  useEffect(() => {
+    return () => {
+      if (logoPreview && logoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(logoPreview);
+      }
+    };
+  }, [logoPreview]);
+ 
   // Ensure file input ref is ready when modal opens
   useEffect(() => {
     if (modalOpen && fileInputRef.current) {
@@ -67,6 +76,10 @@ const PartnerManagement = () => {
     setEditing(null);
     setForm({ name: '', subtitle: '', link_url: '', is_active: true, sort_order: 0 });
     setLogoFile(null);
+    setLogoPreview((prev) => {
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return '';
+    });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -83,6 +96,10 @@ const PartnerManagement = () => {
       sort_order: partner.sort_order ?? 0,
     });
     setLogoFile(null);
+    setLogoPreview((prev) => {
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return partner.logo_url || '';
+    });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -425,9 +442,23 @@ const PartnerManagement = () => {
                     onChange={(e) => {
                       const file = e.target.files?.[0] || null;
                       setLogoFile(file);
+                      setLogoPreview((prev) => {
+                        if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+                        if (!file) return editing?.logo_url || '';
+                        return URL.createObjectURL(file);
+                      });
                     }}
                   />
-                  <span className="text-xs text-gray-600 truncate">{logoFile ? logoFile.name : 'No file chosen'}</span>
+                  <div className="h-16 w-16 rounded border border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50 text-gray-400">
+                    {logoPreview ? (
+                      <img src={logoPreview} alt="Selected logo preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-1 text-[10px]">
+                        <ImageIcon size={16} />
+                        <span>No logo</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

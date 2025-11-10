@@ -27,6 +27,7 @@ const GalleryManagement = () => {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ title: '', is_active: true, sort_order: 0 });
   const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
 
   const [confirmState, setConfirmState] = useState({ open: false, ids: [], message: '', confirming: false });
 
@@ -56,6 +57,14 @@ const GalleryManagement = () => {
 
   useEffect(() => { fetchGalleries(); }, [currentPage, perPage, searchTerm, sortBy, sortOrder, isActive]);
 
+  useEffect(() => {
+    return () => {
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+ 
   // Ensure file input ref is ready when modal opens
   useEffect(() => {
     if (modalOpen && fileInputRef.current) {
@@ -67,6 +76,10 @@ const GalleryManagement = () => {
     setEditing(null);
     setForm({ title: '', is_active: true, sort_order: 0 });
     setImageFile(null);
+    setImagePreview((prev) => {
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return '';
+    });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -81,6 +94,10 @@ const GalleryManagement = () => {
       sort_order: gallery.sort_order ?? 0,
     });
     setImageFile(null);
+    setImagePreview((prev) => {
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return gallery.image_url || '';
+    });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -401,11 +418,24 @@ const GalleryManagement = () => {
                     onChange={(e) => {
                       const file = e.target.files?.[0] || null;
                       setImageFile(file);
+                      setImagePreview((prev) => {
+                        if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+                        if (!file) return editing?.image_url || '';
+                        return URL.createObjectURL(file);
+                      });
                     }}
                   />
-                  <span className="text-xs text-gray-600 truncate">{imageFile ? imageFile.name : 'No file chosen'}</span>
+                  <div className="h-20 w-20 rounded border border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50 text-gray-400">
+                    {imagePreview ? (
+                      <img src={imagePreview} alt="Selected image preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-1 text-xs">
+                        <ImageIcon size={18} />
+                        <span>No image</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
             </div>
             <div className="p-4 border-t flex justify-end gap-2">
               <button onClick={()=> setModalOpen(false)} className="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">Cancel</button>

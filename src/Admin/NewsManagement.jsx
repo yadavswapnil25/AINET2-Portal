@@ -39,6 +39,7 @@ const NewsManagement = () => {
     sort_order: 0 
   });
   const [publisherLogoFile, setPublisherLogoFile] = useState(null);
+  const [publisherLogoPreview, setPublisherLogoPreview] = useState('');
 
   const [confirmState, setConfirmState] = useState({ open: false, ids: [], message: '', confirming: false });
 
@@ -68,6 +69,14 @@ const NewsManagement = () => {
 
   useEffect(() => { fetchNews(); }, [currentPage, perPage, searchTerm, sortBy, sortOrder, isActive]);
 
+  useEffect(() => {
+    return () => {
+      if (publisherLogoPreview && publisherLogoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(publisherLogoPreview);
+      }
+    };
+  }, [publisherLogoPreview]);
+ 
   // Ensure file input ref is ready when modal opens
   useEffect(() => {
     if (modalOpen && fileInputRef.current) {
@@ -91,6 +100,10 @@ const NewsManagement = () => {
       sort_order: 0 
     });
     setPublisherLogoFile(null);
+    setPublisherLogoPreview((prev) => {
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return '';
+    });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -113,6 +126,10 @@ const NewsManagement = () => {
       sort_order: newsItem.sort_order ?? 0,
     });
     setPublisherLogoFile(null);
+    setPublisherLogoPreview((prev) => {
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return newsItem.publisher_logo_url || '';
+    });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -453,9 +470,23 @@ const NewsManagement = () => {
                     onChange={(e) => {
                       const file = e.target.files?.[0] || null;
                       setPublisherLogoFile(file);
+                      setPublisherLogoPreview((prev) => {
+                        if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+                        if (!file) return editing?.publisher_logo_url || '';
+                        return URL.createObjectURL(file);
+                      });
                     }}
                   />
-                  <span className="text-xs text-gray-600 truncate">{publisherLogoFile ? publisherLogoFile.name : 'No file chosen'}</span>
+                  <div className="h-16 w-16 rounded border border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50 text-gray-400">
+                    {publisherLogoPreview ? (
+                      <img src={publisherLogoPreview} alt="Selected logo preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-1 text-[10px]">
+                        <ImageIcon size={16} />
+                        <span>No logo</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <div>

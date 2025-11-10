@@ -27,6 +27,7 @@ const BannerManagement = () => {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ title: '', link_url: '', is_active: true, sort_order: 0, starts_at: '', ends_at: '' });
   const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
 
   const [confirmState, setConfirmState] = useState({ open: false, ids: [], message: '', confirming: false });
 
@@ -56,10 +57,22 @@ const BannerManagement = () => {
 
   useEffect(() => { fetchBanners(); }, [currentPage, perPage, searchTerm, sortBy, sortOrder, isActive]);
 
+  useEffect(() => {
+    return () => {
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+ 
   const openCreate = () => {
     setEditing(null);
     setForm({ title: '', link_url: '', is_active: true, sort_order: 0, starts_at: '', ends_at: '' });
     setImageFile(null);
+    setImagePreview((prev) => {
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return '';
+    });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -77,6 +90,10 @@ const BannerManagement = () => {
       ends_at: banner.ends_at ? banner.ends_at.substring(0, 16) : '',
     });
     setImageFile(null);
+    setImagePreview((prev) => {
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return banner.image_url || '';
+    });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -408,10 +425,24 @@ const BannerManagement = () => {
                       onChange={(e) => {
                         const file = e.target.files?.[0] || null;
                         setImageFile(file);
+                        setImagePreview((prev) => {
+                          if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+                          if (!file) return editing?.image_url || '';
+                          return URL.createObjectURL(file);
+                        });
                       }}
                     />
                   </label>
-                  <span className="text-xs text-gray-600 truncate">{imageFile ? imageFile.name : 'No file chosen'}</span>
+                  <div className="h-16 w-28 rounded border border-gray-200 flex items-center justify-center overflow-hidden bg-gray-50 text-gray-400">
+                    {imagePreview ? (
+                      <img src={imagePreview} alt="Selected image preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-1 text-xs">
+                        <ImageIcon size={18} />
+                        <span>No image</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

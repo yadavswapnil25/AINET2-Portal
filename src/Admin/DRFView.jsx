@@ -13,6 +13,7 @@ import {
   Award,
 } from 'lucide-react';
 import { drfAPI } from '../utils/api';
+import { formatTitleCase } from '../utils/formatters';
 
 const DRFView = () => {
   const { id } = useParams();
@@ -115,7 +116,7 @@ const DRFView = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Gender</label>
-                <p className="text-gray-900">{drf.gender || '-'}</p>
+                <p className="text-gray-900">{formatTitleCase(drf.gender) || '-'}</p>
               </div>
             </div>
           </section>

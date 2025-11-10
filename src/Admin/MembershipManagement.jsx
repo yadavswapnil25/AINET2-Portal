@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useMemberships, useExportMemberships, useDeleteMembership } from '../hooks/useMemberships';
 import toast from 'react-hot-toast';
 import { 
@@ -19,8 +19,12 @@ import {
   User,
   CreditCard,
   Building,
-  GraduationCap
+  GraduationCap,
+  CheckCircle2,
+  XCircle,
+  Ban
 } from 'lucide-react';
+import { formatTitleCase, calculateMembershipValidity, formatQualification, formatAreaOfWork } from '../utils/formatters';
 
 const MembershipManagement = () => {
   // API filters (triggers refetch when changed)
@@ -136,6 +140,45 @@ const MembershipManagement = () => {
       day: 'numeric',
     });
   };
+
+  const membershipValidityText = useMemo(() => {
+    if (!viewDetails) return '-';
+
+    const monthsValue =
+      viewDetails.addMonths ??
+      viewDetails.add_months ??
+      viewDetails.membership_validity_months ??
+      viewDetails.membership_duration_months ??
+      viewDetails.validity_months ??
+      viewDetails.duration_months;
+
+    const { formattedDate, months } = calculateMembershipValidity(viewDetails.created_at, monthsValue);
+    if (!formattedDate) return '-';
+
+    if (months !== null && Number.isFinite(months) && months > 0) {
+      const roundedMonths = Number.isInteger(months) ? months : Number(months.toFixed(2));
+      return `${formattedDate} (${roundedMonths} month${roundedMonths === 1 ? '' : 's'})`;
+    }
+
+    return formattedDate;
+  }, [viewDetails]);
+
+  const statusIconMap = {
+    active: { icon: CheckCircle2, color: 'text-green-300', bg: 'bg-green-500/10' },
+    inactive: { icon: XCircle, color: 'text-yellow-300', bg: 'bg-yellow-500/10' },
+    blocked: { icon: Ban, color: 'text-red-300', bg: 'bg-red-500/10' },
+  };
+ 
+  const rawStatus = viewDetails?.status ?? viewDetails?.membership_status ?? '';
+  const normalizedStatus = typeof rawStatus === 'string' ? rawStatus : String(rawStatus ?? '');
+  const resolvedStatus = normalizedStatus.trim().toLowerCase();
+
+  const statusMeta = statusIconMap[resolvedStatus] || statusIconMap.inactive;
+  const StatusIcon = statusMeta.icon;
+
+  const statusLabel = resolvedStatus
+    ? resolvedStatus.charAt(0).toUpperCase() + resolvedStatus.slice(1)
+    : 'Inactive';
 
   if (isError) {
     return (
@@ -680,7 +723,13 @@ const MembershipManagement = () => {
                   <div>
                     <h2 className="text-2xl font-bold">Membership Details</h2>
                     <p className="text-teal-100 text-sm mt-1">
-                      {viewDetails.name || `${viewDetails.first_name || ''} ${viewDetails.last_name || ''}`.trim()}
+                      <span className="flex items-center gap-2">
+                        {viewDetails.name || `${viewDetails.first_name || ''} ${viewDetails.last_name || ''}`.trim()}
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${statusMeta.bg} text-white`}>
+                          <StatusIcon size={14} className={statusMeta.color} />
+                          {statusLabel}
+                        </span>
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -727,7 +776,7 @@ const MembershipManagement = () => {
                     </div>
                     <div>
                       <label className="text-xs font-medium text-gray-500">Gender</label>
-                      <p className="text-sm text-gray-900">{viewDetails.gender || '-'}</p>
+                      <p className="text-sm text-gray-900">{formatTitleCase(viewDetails.gender) || '-'}</p>
                     </div>
                     <div>
                       <label className="text-xs font-medium text-gray-500">Date of Birth</label>
@@ -831,6 +880,10 @@ const MembershipManagement = () => {
                       </p>
                     </div>
                     <div>
+                      <label className="text-xs font-medium text-gray-500">Membership Validity</label>
+                      <p className="text-sm text-gray-900">{membershipValidityText}</p>
+                    </div>
+                    <div>
                       <label className="text-xs font-medium text-gray-500">Member of Other Association</label>
                       <p className="text-sm text-gray-900">{viewDetails.has_member_any ? 'Yes' : 'No'}</p>
                     </div>
@@ -862,23 +915,11 @@ const MembershipManagement = () => {
                     </div>
                     <div>
                       <label className="text-xs font-medium text-gray-500">Qualification</label>
-                      <p className="text-sm text-gray-900">
-                        {viewDetails.qualification 
-                          ? (typeof viewDetails.qualification === 'string' 
-                            ? viewDetails.qualification 
-                            : JSON.stringify(viewDetails.qualification))
-                          : '-'}
-                      </p>
+                      <p className="text-sm text-gray-900">{formatQualification(viewDetails.qualification)}</p>
                     </div>
                     <div className="md:col-span-2">
                       <label className="text-xs font-medium text-gray-500">Area of Work</label>
-                      <p className="text-sm text-gray-900">
-                        {viewDetails.area_of_work 
-                          ? (typeof viewDetails.area_of_work === 'string' 
-                            ? viewDetails.area_of_work 
-                            : JSON.stringify(viewDetails.area_of_work))
-                          : '-'}
-                      </p>
+                      <p className="text-sm text-gray-900">{formatAreaOfWork(viewDetails.area_of_work)}</p>
                     </div>
                   </div>
                 </div>

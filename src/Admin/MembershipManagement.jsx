@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useMemberships, useExportMemberships, useDeleteMembership } from '../hooks/useMemberships';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useMemberships, useExportMemberships, useDeleteMembership, useBulkDeleteMemberships } from '../hooks/useMemberships';
 import toast from 'react-hot-toast';
 import { 
   Users, 
@@ -47,10 +47,13 @@ const MembershipManagement = () => {
   const [showFilters, setShowFilters] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [viewDetails, setViewDetails] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(null);
 
   const { data, isLoading, isError, error, refetch } = useMemberships(appliedFilters);
   const { mutate: exportMemberships, isLoading: isExporting } = useExportMemberships();
   const { mutate: deleteMembership, isLoading: isDeleting } = useDeleteMembership();
+  const { mutate: bulkDeleteMemberships, isLoading: isBulkDeleting } = useBulkDeleteMemberships();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -132,6 +135,61 @@ const MembershipManagement = () => {
     setDeleteConfirm(null);
   };
 
+  // Selection handlers
+  const toggleSelectAll = () => {
+    if (selectedIds.length === memberships.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(memberships.map((m) => m.id));
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  // Bulk delete handlers
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) {
+      toast.error('Please select at least one membership to delete');
+      return;
+    }
+    setBulkDeleteConfirm({
+      ids: selectedIds,
+      count: selectedIds.length
+    });
+  };
+
+  const confirmBulkDelete = () => {
+    if (!bulkDeleteConfirm) return;
+    
+    bulkDeleteMemberships(bulkDeleteConfirm.ids, {
+      onSuccess: (response) => {
+        const deletedCount = response.data?.deleted_count || 0;
+        const skippedCount = response.data?.skipped_ids?.length || 0;
+        let message = `${deletedCount} membership record(s) deleted successfully`;
+        if (skippedCount > 0) {
+          message += `. ${skippedCount} record(s) were skipped (admin users or your own account cannot be deleted).`;
+        }
+        toast.success(message);
+        setBulkDeleteConfirm(null);
+        setSelectedIds([]);
+        refetch();
+      },
+      onError: (err) => {
+        const errorMessage = err?.response?.data?.message || 'Failed to delete memberships';
+        toast.error(errorMessage);
+        console.error(err);
+      },
+    });
+  };
+
+  const cancelBulkDelete = () => {
+    setBulkDeleteConfirm(null);
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -211,6 +269,11 @@ const MembershipManagement = () => {
   const memberships = data?.data?.memberships || [];
   const pagination = data?.data?.pagination || {};
 
+  // Clear selection when memberships change
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [memberships]);
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
@@ -224,6 +287,16 @@ const MembershipManagement = () => {
             <p className="text-gray-600 mt-2">View and manage all membership records</p>
           </div>
           <div className="flex gap-3">
+            {selectedIds.length > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting}
+                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400 shadow-md"
+              >
+                <Trash2 className="mr-2" size={18} />
+                Delete Selected ({selectedIds.length})
+              </button>
+            )}
             <button
               onClick={() => refetch()}
               disabled={isLoading}
@@ -482,6 +555,14 @@ const MembershipManagement = () => {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <input
+                          type="checkbox"
+                          checked={memberships.length > 0 && selectedIds.length === memberships.length}
+                          onChange={toggleSelectAll}
+                          className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                        />
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         ID
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -513,7 +594,7 @@ const MembershipManagement = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {memberships.length === 0 ? (
                       <tr>
-                        <td colSpan="9" className="px-6 py-12 text-center">
+                        <td colSpan="10" className="px-6 py-12 text-center">
                           <div className="flex flex-col items-center">
                             <Users className="w-16 h-16 text-gray-300 mb-4" />
                             <p className="text-lg font-medium text-gray-500">No memberships found</p>
@@ -524,6 +605,14 @@ const MembershipManagement = () => {
                     ) : (
                       memberships.map((membership) => (
                         <tr key={membership.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(membership.id)}
+                              onChange={() => toggleSelect(membership.id)}
+                              className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                            />
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                             {membership.m_id || membership.id}
                           </td>
@@ -658,6 +747,54 @@ const MembershipManagement = () => {
             </>
           )}
         </div>
+
+        {/* Bulk Delete Confirmation Modal */}
+        {bulkDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl">
+              <div className="flex items-center mb-4">
+                <div className="p-3 rounded-full bg-red-100 mr-4">
+                  <Trash2 className="text-red-600" size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Delete Memberships</h3>
+              </div>
+              
+              <p className="text-gray-600 mb-2">
+                Are you sure you want to delete {bulkDeleteConfirm.count} membership record(s)?
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                This will move the selected memberships to trash. You can restore them later if needed.
+              </p>
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={cancelBulkDelete}
+                  disabled={isBulkDeleting}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBulkDelete}
+                  disabled={isBulkDeleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:bg-red-400 flex items-center"
+                >
+                  {isBulkDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={16} className="mr-2" />
+                      Delete {bulkDeleteConfirm.count} Record(s)
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Delete Confirmation Modal */}
         {deleteConfirm && (

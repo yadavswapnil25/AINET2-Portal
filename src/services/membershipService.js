@@ -56,6 +56,21 @@ export const membershipService = {
   },
 
   /**
+   * Bulk delete membership records (soft delete)
+   */
+  bulkDeleteMemberships: async (ids = []) => {
+    try {
+      const response = await apiClient.post('/client/admin/memberships/bulk', {
+        data: { ids }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error bulk deleting memberships:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Restore soft deleted membership record
    */
   restoreMembership: async (id) => {

@@ -57,6 +57,26 @@ export const useDeleteMembership = () => {
 };
 
 /**
+ * Hook to bulk delete memberships (soft delete)
+ */
+export const useBulkDeleteMemberships = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation(
+    (ids) => membershipService.bulkDeleteMemberships(ids),
+    {
+      onSuccess: () => {
+        // Invalidate and refetch memberships
+        queryClient.invalidateQueries('memberships');
+      },
+      onError: (error) => {
+        console.error('Bulk delete failed:', error);
+      },
+    }
+  );
+};
+
+/**
  * Hook to restore membership
  */
 export const useRestoreMembership = () => {

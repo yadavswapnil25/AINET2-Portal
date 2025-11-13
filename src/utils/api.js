@@ -228,6 +228,7 @@ export const drfAPI = {
       search: params.search || '',
       sort_by: params.sort_by || 'created_at',
       sort_order: params.sort_order || 'desc',
+      conference_filter: params.conference_filter || '9th_conference',
     });
     if (params.start_date) {
       queryParams.append('start_date', params.start_date);
@@ -253,12 +254,19 @@ export const drfAPI = {
       search: params.search || '',
       sort_by: params.sort_by || 'created_at',
       sort_order: params.sort_order || 'desc',
+      conference_filter: params.conference_filter || '9th_conference',
     });
     if (params.start_date) {
       queryParams.append('start_date', params.start_date);
     }
     if (params.end_date) {
       queryParams.append('end_date', params.end_date);
+    }
+    // Add selected IDs if provided
+    if (params.selected_ids && Array.isArray(params.selected_ids) && params.selected_ids.length > 0) {
+      params.selected_ids.forEach(id => {
+        queryParams.append('selected_ids[]', id);
+      });
     }
     const response = await apiClient.get(`/client/admin/drf/export?${queryParams}`, {
       responseType: 'blob',

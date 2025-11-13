@@ -1,4 +1,4 @@
-import apiClient from './api';
+import apiClient from '../utils/api';
 
 export const membershipService = {
   /**
@@ -6,7 +6,7 @@ export const membershipService = {
    */
   getMembershipList: async (params = {}) => {
     try {
-      const response = await apiClient.get('/admin/memberships', { params });
+      const response = await apiClient.get('/client/admin/memberships', { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching memberships:', error);
@@ -19,7 +19,7 @@ export const membershipService = {
    */
   exportMemberships: async (params = {}) => {
     try {
-      const response = await apiClient.get('/admin/memberships/export', {
+      const response = await apiClient.get('/client/admin/memberships/export', {
         params,
         responseType: 'blob',
       });
@@ -47,7 +47,7 @@ export const membershipService = {
    */
   deleteMembership: async (id) => {
     try {
-      const response = await apiClient.delete(`/admin/memberships/${id}`);
+      const response = await apiClient.delete(`/client/admin/memberships/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error deleting membership:', error);
@@ -60,7 +60,7 @@ export const membershipService = {
    */
   restoreMembership: async (id) => {
     try {
-      const response = await apiClient.post(`/admin/memberships/${id}/restore`);
+      const response = await apiClient.post(`/client/admin/memberships/${id}/restore`);
       return response.data;
     } catch (error) {
       console.error('Error restoring membership:', error);
@@ -73,7 +73,7 @@ export const membershipService = {
    */
   getTrashedMemberships: async (params = {}) => {
     try {
-      const response = await apiClient.get('/admin/memberships/trashed', { params });
+      const response = await apiClient.get('/client/admin/memberships/trashed', { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching trashed memberships:', error);

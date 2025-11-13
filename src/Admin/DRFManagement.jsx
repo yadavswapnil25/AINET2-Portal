@@ -43,6 +43,7 @@ const DRFManagement = () => {
   const [endDate, setEndDate] = useState('');
   const [appliedStartDate, setAppliedStartDate] = useState('');
   const [appliedEndDate, setAppliedEndDate] = useState('');
+  const [conferenceFilter, setConferenceFilter] = useState('9th_conference'); // Default to 9th conference
 
   // Fetch DRF records
   const fetchDRFs = async () => {
@@ -56,6 +57,7 @@ const DRFManagement = () => {
         sort_order: sortOrder,
         start_date: appliedStartDate,
         end_date: appliedEndDate,
+        conference_filter: conferenceFilter,
       });
 
       if (response.status) {
@@ -87,6 +89,8 @@ const DRFManagement = () => {
         sort_order: sortOrder,
         start_date: appliedStartDate,
         end_date: appliedEndDate,
+        conference_filter: conferenceFilter,
+        selected_ids: selectedIds.length > 0 ? selectedIds : undefined, // Export selected records if any, otherwise export filtered records
       });
 
       const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
@@ -173,7 +177,7 @@ const DRFManagement = () => {
 
   useEffect(() => {
     fetchDRFs();
-  }, [currentPage, perPage, debouncedSearchTerm, sortBy, sortOrder, appliedStartDate, appliedEndDate]);
+  }, [currentPage, perPage, debouncedSearchTerm, sortBy, sortOrder, appliedStartDate, appliedEndDate, conferenceFilter]);
 
   // Handle search
   const handleSearch = (e) => {
@@ -337,6 +341,19 @@ const DRFManagement = () => {
                 <option value={10}>10 per page</option>
                 <option value={20}>20 per page</option>
                 <option value={50}>50 per page</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={conferenceFilter}
+                onChange={(e) => {
+                  setConferenceFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+              >
+                <option value="9th_conference">9th Conference Only</option>
+                <option value="all">All Conferences</option>
               </select>
             </div>
           </div>

@@ -16,6 +16,7 @@ import {
   Plus,
   Download,
   Trash2,
+  Edit,
 } from 'lucide-react';
 import { drfAPI } from '../utils/api';
 import { useDebounce } from '../utils/useDebounce';
@@ -524,6 +525,14 @@ const DRFManagement = () => {
                         className="p-2 rounded hover:bg-gray-100 text-teal-600 hover:text-teal-700 transition-colors"
                       >
                         <Eye size={16} />
+                      </button>
+                      <button
+                        onClick={() => navigate(`/admin/drfs/${drf.id}`)}
+                        title="Edit"
+                        aria-label="Edit"
+                        className="p-2 rounded hover:bg-gray-100 text-blue-600 hover:text-blue-700 transition-colors"
+                      >
+                        <Edit size={16} />
                       </button>
                       <button
                         onClick={() => requestDelete(drf.id)}

@@ -11,6 +11,9 @@ import {
   Briefcase,
   MapPin,
   Award,
+  Edit,
+  Save,
+  X,
 } from 'lucide-react';
 import { drfAPI } from '../utils/api';
 import { formatTitleCase } from '../utils/formatters';
@@ -20,6 +23,9 @@ const DRFView = () => {
   const navigate = useNavigate();
   const [drf, setDrf] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchDRF = async () => {
@@ -28,6 +34,7 @@ const DRFView = () => {
         const response = await drfAPI.getDRF(id);
         if (response.status) {
           setDrf(response.data.drf);
+          setFormData(response.data.drf);
         }
       } catch (error) {
         console.error('Error fetching DRF:', error);
@@ -41,6 +48,40 @@ const DRFView = () => {
       fetchDRF();
     }
   }, [id]);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setFormData(drf);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setFormData(drf);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const response = await drfAPI.updateDRF(id, formData);
+      if (response.status) {
+        setDrf(response.data.drf);
+        setIsEditing(false);
+        toast.success('DRF record updated successfully');
+      } else {
+        toast.error('Failed to update DRF record');
+      }
+    } catch (error) {
+      console.error('Error updating DRF:', error);
+      toast.error('Failed to update DRF record');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -74,6 +115,35 @@ const DRFView = () => {
             <p className="text-sm text-gray-600">DRF ID: {drf.id}</p>
           </div>
         </div>
+        <div className="flex items-center gap-2">
+          {!isEditing ? (
+            <button
+              onClick={handleEdit}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
+            >
+              <Edit size={16} />
+              Edit
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleCancel}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+              >
+                <X size={16} />
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save size={16} />
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Main Content */}
@@ -88,35 +158,102 @@ const DRFView = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700">Title</label>
-                <p className="text-gray-900">{drf.pre_title || '-'}</p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="pre_title"
+                    value={formData.pre_title || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{drf.pre_title || '-'}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Full Name</label>
-                <p className="text-gray-900 font-medium">{drf.name || '-'}</p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900 font-medium">{drf.name || '-'}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Member Status</label>
-                <p className="text-gray-900">
-                  <span className={`inline-flex px-2 py-1 rounded text-sm ${
-                    drf.is_member === 'Yes' || drf.member 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {drf.is_member === 'Yes' || drf.member ? (drf.member || 'Yes') : 'No'}
-                  </span>
-                </p>
+                {isEditing ? (
+                  <select
+                    name="member"
+                    value={formData.member || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="">Select</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                ) : (
+                  <p className="text-gray-900">
+                    <span className={`inline-flex px-2 py-1 rounded text-sm ${
+                      drf.is_member === 'Yes' || drf.member 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {drf.is_member === 'Yes' || drf.member ? (drf.member || 'Yes') : 'No'}
+                    </span>
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Registration Type</label>
-                <p className="text-gray-900">{drf.you_are_register_as || '-'}</p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="you_are_register_as"
+                    value={formData.you_are_register_as || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{drf.you_are_register_as || '-'}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Age</label>
-                <p className="text-gray-900">{drf.age || '-'}</p>
+                {isEditing ? (
+                  <input
+                    type="number"
+                    name="age"
+                    value={formData.age || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{drf.age || '-'}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Gender</label>
-                <p className="text-gray-900">{formatTitleCase(drf.gender) || '-'}</p>
+                {isEditing ? (
+                  <select
+                    name="gender"
+                    value={formData.gender || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                ) : (
+                  <p className="text-gray-900">{formatTitleCase(drf.gender) || '-'}</p>
+                )}
               </div>
             </div>
           </section>
@@ -133,18 +270,49 @@ const DRFView = () => {
                   <Mail size={16} className="text-gray-500" />
                   Email
                 </label>
-                <a href={`mailto:${drf.email}`} className="text-blue-600 hover:underline">
-                  {drf.email || '-'}
-                </a>
+                {isEditing ? (
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <a href={`mailto:${drf.email}`} className="text-blue-600 hover:underline">
+                    {drf.email || '-'}
+                  </a>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
                   <Phone size={16} className="text-gray-500" />
                   Phone
                 </label>
-                <a href={`tel:+${drf.country_code || ''}${drf.phone_no}`} className="text-blue-600 hover:underline">
-                  +{drf.country_code || ''} {drf.phone_no || '-'}
-                </a>
+                {isEditing ? (
+                  <div className="flex gap-2 mt-1">
+                    <input
+                      type="text"
+                      name="country_code"
+                      value={formData.country_code || ''}
+                      onChange={handleChange}
+                      placeholder="Country Code"
+                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
+                    <input
+                      type="text"
+                      name="phone_no"
+                      value={formData.phone_no || ''}
+                      onChange={handleChange}
+                      placeholder="Phone Number"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                ) : (
+                  <a href={`tel:+${drf.country_code || ''}${drf.phone_no}`} className="text-blue-600 hover:underline">
+                    +{drf.country_code || ''} {drf.phone_no || '-'}
+                  </a>
+                )}
               </div>
             </div>
           </section>
@@ -161,23 +329,73 @@ const DRFView = () => {
                   <Briefcase size={16} className="text-gray-500" />
                   Institution
                 </label>
-                <p className="text-gray-900">{drf.institution || '-'}</p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="institution"
+                    value={formData.institution || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{drf.institution || '-'}</p>
+                )}
               </div>
               <div className="md:col-span-2">
                 <label className="text-sm font-medium text-gray-700">Address</label>
-                <p className="text-gray-900">{drf.address || '-'}</p>
+                {isEditing ? (
+                  <textarea
+                    name="address"
+                    value={formData.address || ''}
+                    onChange={handleChange}
+                    rows={3}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{drf.address || '-'}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">City</label>
-                <p className="text-gray-900">{drf.city || '-'}</p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{drf.city || '-'}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">State</label>
-                <p className="text-gray-900">{drf.state || '-'}</p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{drf.state || '-'}</p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Pincode</label>
-                <p className="text-gray-900">{drf.pincode || '-'}</p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="pincode"
+                    value={formData.pincode || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{drf.pincode || '-'}</p>
+                )}
               </div>
             </div>
           </section>
@@ -191,11 +409,51 @@ const DRFView = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="text-sm font-medium text-gray-700">Conference Activities</label>
-                <p className="text-gray-900">{drf.conference || '-'}</p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="conference"
+                    value={formData.conference || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{drf.conference || '-'}</p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Conference Attendance</label>
+                {isEditing ? (
+                  <select
+                    name="conference_attendance"
+                    value={formData.conference_attendance || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="">Select Conference</option>
+                    <option value="9th_conference">9th Conference</option>
+                    <option value="8th_conference">8th Conference</option>
+                    <option value="7th_conference">7th Conference</option>
+                    <option value="6th_conference">6th Conference</option>
+                    <option value="5th_conference">5th Conference</option>
+                  </select>
+                ) : (
+                  <p className="text-gray-900">{drf.conference_attendance || '-'}</p>
+                )}
               </div>
               <div className="md:col-span-2">
                 <label className="text-sm font-medium text-gray-700">Areas of Interest</label>
-                <p className="text-gray-900 whitespace-pre-wrap">{drf.areas || '-'}</p>
+                {isEditing ? (
+                  <textarea
+                    name="areas"
+                    value={formData.areas || ''}
+                    onChange={handleChange}
+                    rows={4}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900 whitespace-pre-wrap">{drf.areas || '-'}</p>
+                )}
               </div>
               {drf.area_special && (
                 <div className="md:col-span-2">
@@ -205,7 +463,17 @@ const DRFView = () => {
               )}
               <div>
                 <label className="text-sm font-medium text-gray-700">Experience</label>
-                <p className="text-gray-900">{drf.experience || '-'}</p>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="experience"
+                    value={formData.experience || ''}
+                    onChange={handleChange}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{drf.experience || '-'}</p>
+                )}
               </div>
             </div>
           </section>

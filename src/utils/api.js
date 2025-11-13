@@ -274,6 +274,12 @@ export const drfAPI = {
     return response;
   },
 
+  // Update single DRF
+  updateDRF: async (id, data) => {
+    const response = await apiClient.put(`/client/admin/drf/${id}`, data);
+    return response.data;
+  },
+
   // Delete single DRF
   deleteDRF: async (id) => {
     const response = await apiClient.delete(`/client/admin/drf/${id}`);

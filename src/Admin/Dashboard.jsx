@@ -196,6 +196,8 @@ const Dashboard = () => {
   const maleMembers = stats?.male_members ?? 0;
   const femaleMembers = stats?.female_members ?? 0;
   const blockedMembers = stats?.blocked_members ?? 0;
+  const activeMembers = stats?.active_members ?? 0;
+  const inactiveMembers = stats?.inactive_members ?? 0;
 
   // Filter users based on search term
   const filteredUsers = users.filter(user =>
@@ -314,7 +316,7 @@ const Dashboard = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
         <div className="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-teal-500">
           <div className="flex items-center">
             <div className="p-2 bg-teal-100 rounded-lg flex-shrink-0">
@@ -333,6 +335,34 @@ const Dashboard = () => {
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
               <UserCheck className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+            </div>
+            <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Active Members</p>
+              <p className="text-xl sm:text-2xl font-semibold text-gray-900">
+                {isLoadingStats ? '...' : activeMembers}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-orange-500">
+          <div className="flex items-center">
+            <div className="p-2 bg-orange-100 rounded-lg flex-shrink-0">
+              <UserX className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
+            </div>
+            <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Inactive Members</p>
+              <p className="text-xl sm:text-2xl font-semibold text-gray-900">
+                {isLoadingStats ? '...' : inactiveMembers}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-blue-500">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+              <UserCheck className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             </div>
             <div className="ml-3 sm:ml-4 min-w-0 flex-1">
               <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Male Members</p>

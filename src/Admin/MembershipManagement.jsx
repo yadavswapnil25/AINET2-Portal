@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useMemberships, useExportMemberships, useDeleteMembership, useBulkDeleteMemberships } from '../hooks/useMemberships';
+import { useMemberships, useExportMemberships, useDeleteMembership, useBulkDeleteMemberships, useUpdateMembership } from '../hooks/useMemberships';
 import toast from 'react-hot-toast';
 import { 
   Users, 
@@ -22,7 +22,9 @@ import {
   GraduationCap,
   CheckCircle2,
   XCircle,
-  Ban
+  Ban,
+  Edit,
+  Save
 } from 'lucide-react';
 import { formatTitleCase, calculateMembershipValidity, formatQualification, formatAreaOfWork } from '../utils/formatters';
 
@@ -49,11 +51,16 @@ const MembershipManagement = () => {
   const [viewDetails, setViewDetails] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [pageInput, setPageInput] = useState('');
 
   const { data, isLoading, isError, error, refetch } = useMemberships(appliedFilters);
   const { mutate: exportMemberships, isLoading: isExporting } = useExportMemberships();
   const { mutate: deleteMembership, isLoading: isDeleting } = useDeleteMembership();
   const { mutate: bulkDeleteMemberships, isLoading: isBulkDeleting } = useBulkDeleteMemberships();
+  const { mutate: updateMembership, isLoading: isUpdating } = useUpdateMembership();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -87,6 +94,46 @@ const MembershipManagement = () => {
     setAppliedFilters(prev => ({ ...prev, page }));
   };
 
+  // Handle page input change
+  const handlePageInputChange = (e) => {
+    setPageInput(e.target.value);
+  };
+
+  // Handle page input Enter key
+  const handlePageInputKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      const page = parseInt(pageInput);
+      const totalPages = data?.data?.pagination?.last_page || 1;
+      if (!isNaN(page) && page >= 1 && page <= totalPages) {
+        handlePageChange(page);
+        setPageInput('');
+      } else {
+        toast.error(`Please enter a valid page number between 1 and ${totalPages}`);
+        setPageInput('');
+      }
+    }
+  };
+
+  // Handle page input blur (click outside)
+  const handlePageInputBlur = () => {
+    if (pageInput.trim() !== '') {
+      const page = parseInt(pageInput);
+      const totalPages = data?.data?.pagination?.last_page || 1;
+      const currentPage = data?.data?.pagination?.current_page || 1;
+      if (!isNaN(page) && page >= 1 && page <= totalPages) {
+        if (page !== currentPage) {
+          handlePageChange(page);
+        }
+        setPageInput('');
+      } else {
+        toast.error(`Please enter a valid page number between 1 and ${totalPages}`);
+        setPageInput('');
+      }
+    } else {
+      setPageInput('');
+    }
+  };
+
   const handleExport = () => {
     const exportFilters = { ...appliedFilters };
     delete exportFilters.page;
@@ -109,10 +156,51 @@ const MembershipManagement = () => {
 
   const handleViewDetails = (membership) => {
     setViewDetails(membership);
+    setFormData(membership);
+    setIsEditing(false);
   };
 
   const closeDetailsModal = () => {
     setViewDetails(null);
+    setIsEditing(false);
+    setFormData({});
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setFormData(viewDetails);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setFormData(viewDetails);
+  };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleSave = () => {
+    updateMembership(
+      { id: viewDetails.id, data: formData },
+      {
+        onSuccess: (response) => {
+          toast.success(response.message || 'Membership updated successfully!');
+          setViewDetails(response.data?.membership || formData);
+          setIsEditing(false);
+          refetch();
+        },
+        onError: (err) => {
+          const errorMessage = err?.response?.data?.message || err?.response?.data?.errors?.message || 'Failed to update membership';
+          toast.error(errorMessage);
+          console.error(err);
+        },
+      }
+    );
   };
 
   const confirmDelete = () => {
@@ -221,22 +309,65 @@ const MembershipManagement = () => {
     return formattedDate;
   }, [viewDetails]);
 
+  // Calculate membership status based on member_date + addMonths (same logic as DRF discount validation)
+  const calculateMembershipStatus = useMemo(() => {
+    // Use formData when editing, otherwise use viewDetails
+    const data = isEditing && Object.keys(formData).length > 0 ? formData : viewDetails;
+    
+    if (!data) return { status: 'inactive', label: 'Inactive', expiryDate: null };
+
+    // Check if member is blocked (status = 0)
+    const isBlocked = data.status === 0 || data.status === '0' || data.status === false;
+    if (isBlocked) {
+      return { status: 'blocked', label: 'Blocked', expiryDate: null };
+    }
+
+    // Check if member has membership ID
+    if (!data.m_id) {
+      return { status: 'inactive', label: 'Inactive', expiryDate: null };
+    }
+
+    // Calculate expiry date: member_date + addMonths
+    // Use member_date if available, otherwise fallback to created_at
+    const memberDate = data.member_date ? new Date(data.member_date) : (data.created_at ? new Date(data.created_at) : null);
+    
+    if (!memberDate) {
+      return { status: 'inactive', label: 'Inactive', expiryDate: null };
+    }
+
+    const addMonths = data.addMonths ?? data.add_months ?? 12; // Default to 12 months if not set
+    
+    // Calculate expiry date: add months and set to last day of that month with original time
+    const expiryDate = new Date(memberDate);
+    expiryDate.setMonth(expiryDate.getMonth() + addMonths);
+    
+    // Get the last day of the expiry month
+    const lastDayOfMonth = new Date(expiryDate.getFullYear(), expiryDate.getMonth() + 1, 0).getDate();
+    
+    // Set to last day of month but keep original time
+    expiryDate.setDate(lastDayOfMonth);
+    expiryDate.setHours(memberDate.getHours(), memberDate.getMinutes(), memberDate.getSeconds());
+    
+    // Check if membership is still valid
+    const now = new Date();
+    const isValid = now <= expiryDate;
+    
+    return {
+      status: isValid ? 'active' : 'inactive',
+      label: isValid ? 'Active' : 'Inactive',
+      expiryDate: expiryDate
+    };
+  }, [viewDetails, formData, isEditing]);
+
   const statusIconMap = {
     active: { icon: CheckCircle2, color: 'text-green-300', bg: 'bg-green-500/10' },
     inactive: { icon: XCircle, color: 'text-yellow-300', bg: 'bg-yellow-500/10' },
     blocked: { icon: Ban, color: 'text-red-300', bg: 'bg-red-500/10' },
   };
- 
-  const rawStatus = viewDetails?.status ?? viewDetails?.membership_status ?? '';
-  const normalizedStatus = typeof rawStatus === 'string' ? rawStatus : String(rawStatus ?? '');
-  const resolvedStatus = normalizedStatus.trim().toLowerCase();
 
-  const statusMeta = statusIconMap[resolvedStatus] || statusIconMap.inactive;
+  const statusMeta = statusIconMap[calculateMembershipStatus.status] || statusIconMap.inactive;
   const StatusIcon = statusMeta.icon;
-
-  const statusLabel = resolvedStatus
-    ? resolvedStatus.charAt(0).toUpperCase() + resolvedStatus.slice(1)
-    : 'Inactive';
+  const statusLabel = calculateMembershipStatus.label;
 
   if (isError) {
     return (
@@ -720,7 +851,7 @@ const MembershipManagement = () => {
                         <span className="font-medium">{pagination.total || 0}</span> results
                       </p>
                     </div>
-                    <div>
+                    <div className="flex items-center gap-3">
                       <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                         <button
                           onClick={() => handlePageChange(pagination.current_page - 1)}
@@ -740,6 +871,21 @@ const MembershipManagement = () => {
                           <ChevronRight size={18} />
                         </button>
                       </nav>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-700">Go to page:</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max={pagination?.last_page || 1}
+                          value={pageInput}
+                          onChange={handlePageInputChange}
+                          onKeyPress={handlePageInputKeyPress}
+                          onBlur={handlePageInputBlur}
+                          placeholder={pagination?.current_page?.toString() || '1'}
+                          className="w-20 px-3 py-1.5 border border-gray-300 rounded-md text-sm text-center focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        />
+                        <span className="text-sm text-gray-500">of {pagination?.last_page || 1}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -861,21 +1007,72 @@ const MembershipManagement = () => {
                     <h2 className="text-2xl font-bold">Membership Details</h2>
                     <p className="text-teal-100 text-sm mt-1">
                       <span className="flex items-center gap-2">
-                        {viewDetails.name || `${viewDetails.first_name || ''} ${viewDetails.last_name || ''}`.trim()}
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${statusMeta.bg} text-white`}>
-                          <StatusIcon size={14} className={statusMeta.color} />
+                        {(isEditing ? formData.name : viewDetails.name) || `${(isEditing ? formData.first_name : viewDetails.first_name) || ''} ${(isEditing ? formData.last_name : viewDetails.last_name) || ''}`.trim()}
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full ${
+                          calculateMembershipStatus.status === 'active'
+                            ? 'bg-green-500/20 text-green-100 border border-green-300/30'
+                            : calculateMembershipStatus.status === 'blocked'
+                            ? 'bg-red-500/20 text-red-100 border border-red-300/30'
+                            : 'bg-yellow-500/20 text-yellow-100 border border-yellow-300/30'
+                        }`}>
+                          <StatusIcon size={14} className={
+                            calculateMembershipStatus.status === 'active'
+                              ? 'text-green-200'
+                              : calculateMembershipStatus.status === 'blocked'
+                              ? 'text-red-200'
+                              : 'text-yellow-200'
+                          } />
                           {statusLabel}
                         </span>
                       </span>
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={closeDetailsModal}
-                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                >
-                  <X size={24} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {!isEditing ? (
+                    <button
+                      onClick={handleEdit}
+                      className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors text-sm font-medium"
+                    >
+                      <Edit size={18} />
+                      Edit
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleCancel}
+                        disabled={isUpdating}
+                        className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                      >
+                        <X size={18} />
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSave}
+                        disabled={isUpdating}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                      >
+                        {isUpdating ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save size={18} />
+                            Save
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={closeDetailsModal}
+                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
               </div>
 
               {/* Content */}
@@ -888,36 +1085,120 @@ const MembershipManagement = () => {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Member ID</label>
-                      <p className="text-sm text-gray-900 font-medium">{viewDetails.m_id || viewDetails.id || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Member ID</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="m_id"
+                          value={formData.m_id || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.m_id || viewDetails.id || '-'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Reference ID</label>
-                      <p className="text-sm text-gray-900 font-medium">{viewDetails.ref || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Reference ID</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="ref"
+                          value={formData.ref || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.ref || '-'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Title</label>
-                      <p className="text-sm text-gray-900">{viewDetails.title || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Title</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="title"
+                          value={formData.title || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.title || '-'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Full Name</label>
-                      <p className="text-sm text-gray-900 font-medium">{viewDetails.name || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Full Name</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="name"
+                          value={formData.name || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.name || '-'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">First Name</label>
-                      <p className="text-sm text-gray-900">{viewDetails.first_name || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">First Name</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="first_name"
+                          value={formData.first_name || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.first_name || '-'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Last Name</label>
-                      <p className="text-sm text-gray-900">{viewDetails.last_name || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Last Name</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="last_name"
+                          value={formData.last_name || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.last_name || '-'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Gender</label>
-                      <p className="text-sm text-gray-900">{formatTitleCase(viewDetails.gender) || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Gender</label>
+                      {isEditing ? (
+                        <select
+                          name="gender"
+                          value={formData.gender || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      ) : (
+                        <p className="text-sm text-gray-900">{formatTitleCase(viewDetails.gender) || '-'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Date of Birth</label>
-                      <p className="text-sm text-gray-900">{viewDetails.dob || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Date of Birth</label>
+                      {isEditing ? (
+                        <input
+                          type="date"
+                          name="dob"
+                          value={formData.dob ? formData.dob.split(' ')[0] : ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.dob || '-'}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -930,25 +1211,55 @@ const MembershipManagement = () => {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Email</label>
-                      <p className="text-sm text-gray-900 font-medium flex items-center">
-                        <Mail size={14} className="mr-2 text-gray-400" />
-                        {viewDetails.email || '-'}
-                      </p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Email</label>
+                      {isEditing ? (
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900 flex items-center">
+                          <Mail size={14} className="mr-2 text-gray-400" />
+                          {viewDetails.email || '-'}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Mobile</label>
-                      <p className="text-sm text-gray-900 flex items-center">
-                        <Phone size={14} className="mr-2 text-gray-400" />
-                        {viewDetails.mobile || '-'}
-                      </p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Mobile</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="mobile"
+                          value={formData.mobile || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900 flex items-center">
+                          <Phone size={14} className="mr-2 text-gray-400" />
+                          {viewDetails.mobile || '-'}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">WhatsApp</label>
-                      <p className="text-sm text-gray-900 flex items-center">
-                        <Phone size={14} className="mr-2 text-gray-400" />
-                        {viewDetails.whatsapp_no || '-'}
-                      </p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">WhatsApp</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="whatsapp_no"
+                          value={formData.whatsapp_no || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900 flex items-center">
+                          <Phone size={14} className="mr-2 text-gray-400" />
+                          {viewDetails.whatsapp_no || '-'}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -961,20 +1272,60 @@ const MembershipManagement = () => {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                     <div className="md:col-span-2">
-                      <label className="text-xs font-medium text-gray-500">Address</label>
-                      <p className="text-sm text-gray-900">{viewDetails.address || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Address</label>
+                      {isEditing ? (
+                        <textarea
+                          name="address"
+                          value={formData.address || ''}
+                          onChange={handleChange}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.address || '-'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">State</label>
-                      <p className="text-sm text-gray-900">{viewDetails.state || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">State</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="state"
+                          value={formData.state || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.state || '-'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">District</label>
-                      <p className="text-sm text-gray-900">{viewDetails.district || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">District</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="district"
+                          value={formData.district || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.district || '-'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">PIN Code</label>
-                      <p className="text-sm text-gray-900">{viewDetails.pin || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">PIN Code</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="pin"
+                          value={formData.pin || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.pin || '-'}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -987,54 +1338,194 @@ const MembershipManagement = () => {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Membership Type</label>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Membership Type</label>
+                      {isEditing ? (
+                        <select
+                          name="membership_type"
+                          value={formData.membership_type || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        >
+                          <option value="">Select Type</option>
+                          <option value="Individual">Individual</option>
+                          <option value="Institutional">Institutional</option>
+                        </select>
+                      ) : (
+                        <p className="text-sm">
+                          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            viewDetails.membership_type === 'Individual' 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : viewDetails.membership_type === 'Institutional'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {viewDetails.membership_type || '-'}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Membership Plan</label>
+                      {isEditing ? (
+                        <select
+                          name="membership_plan"
+                          value={formData.membership_plan || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        >
+                          <option value="">Select Plan</option>
+                          <option value="Annual">Annual</option>
+                          <option value="LongTerm">Long Term</option>
+                          <option value="Overseas">Overseas</option>
+                        </select>
+                      ) : (
+                        <p className="text-sm">
+                          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            viewDetails.membership_plan === 'Annual' 
+                              ? 'bg-green-100 text-green-800' 
+                              : viewDetails.membership_plan === 'LongTerm'
+                              ? 'bg-teal-100 text-teal-800'
+                              : viewDetails.membership_plan === 'Overseas'
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {viewDetails.membership_plan || '-'}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Member Date</label>
+                      {isEditing ? (
+                        <input
+                          type="date"
+                          name="member_date"
+                          value={formData.member_date ? (typeof formData.member_date === 'string' ? formData.member_date.split(' ')[0] : new Date(formData.member_date).toISOString().split('T')[0]) : ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.member_date ? formatDate(viewDetails.member_date) : '-'}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Add Months</label>
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          name="addMonths"
+                          value={formData.addMonths || ''}
+                          onChange={handleChange}
+                          min="1"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.addMonths || viewDetails.add_months || '-'}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Status (Block/Unblock)</label>
+                      {isEditing ? (
+                        <select
+                          name="status"
+                          value={formData.status !== undefined ? formData.status : 1}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        >
+                          <option value={1}>Active (Unblocked)</option>
+                          <option value={0}>Blocked</option>
+                        </select>
+                      ) : (
+                        <p className="text-sm text-gray-900">
+                          {viewDetails.status === 0 || viewDetails.status === '0' ? 'Blocked' : 'Active'}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Membership Status (Calculated)</label>
                       <p className="text-sm">
-                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          viewDetails.membership_type === 'Individual' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : viewDetails.membership_type === 'Institutional'
-                            ? 'bg-purple-100 text-purple-800'
-                            : 'bg-gray-100 text-gray-800'
+                        <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full ${
+                          calculateMembershipStatus.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : calculateMembershipStatus.status === 'blocked'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {viewDetails.membership_type || '-'}
+                          <StatusIcon size={14} className={
+                            calculateMembershipStatus.status === 'active'
+                              ? 'text-green-600'
+                              : calculateMembershipStatus.status === 'blocked'
+                              ? 'text-red-600'
+                              : 'text-yellow-600'
+                          } />
+                          {statusLabel}
                         </span>
                       </p>
+                      {calculateMembershipStatus.expiryDate && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Expires: {formatDate(calculateMembershipStatus.expiryDate.toISOString())}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Membership Plan</label>
-                      <p className="text-sm">
-                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          viewDetails.membership_plan === 'Annual' 
-                            ? 'bg-green-100 text-green-800' 
-                            : viewDetails.membership_plan === 'LongTerm'
-                            ? 'bg-teal-100 text-teal-800'
-                            : viewDetails.membership_plan === 'Overseas'
-                            ? 'bg-orange-100 text-orange-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {viewDetails.membership_plan || '-'}
-                        </span>
-                      </p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Member of Other Association</label>
+                      {isEditing ? (
+                        <select
+                          name="has_member_any"
+                          value={formData.has_member_any ? '1' : '0'}
+                          onChange={(e) => setFormData(prev => ({ ...prev, has_member_any: e.target.value === '1' }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        >
+                          <option value="0">No</option>
+                          <option value="1">Yes</option>
+                        </select>
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.has_member_any ? 'Yes' : 'No'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Membership Validity</label>
-                      <p className="text-sm text-gray-900">{membershipValidityText}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Association Name</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="name_association"
+                          value={formData.name_association || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.name_association || '-'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Member of Other Association</label>
-                      <p className="text-sm text-gray-900">{viewDetails.has_member_any ? 'Yes' : 'No'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Newsletter Subscription</label>
+                      {isEditing ? (
+                        <select
+                          name="has_newsletter"
+                          value={formData.has_newsletter ? '1' : '0'}
+                          onChange={(e) => setFormData(prev => ({ ...prev, has_newsletter: e.target.value === '1' }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        >
+                          <option value="0">No</option>
+                          <option value="1">Yes</option>
+                        </select>
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.has_newsletter ? 'Yes' : 'No'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Association Name</label>
-                      <p className="text-sm text-gray-900">{viewDetails.name_association || '-'}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-500">Newsletter Subscription</label>
-                      <p className="text-sm text-gray-900">{viewDetails.has_newsletter ? 'Yes' : 'No'}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-500">Expectations</label>
-                      <p className="text-sm text-gray-900">{viewDetails.expectation || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Expectations</label>
+                      {isEditing ? (
+                        <textarea
+                          name="expectation"
+                          value={formData.expectation || ''}
+                          onChange={handleChange}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.expectation || '-'}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1047,22 +1538,54 @@ const MembershipManagement = () => {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Teaching Experience (Years)</label>
-                      <p className="text-sm text-gray-900">{viewDetails.teaching_exp || '-'}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Teaching Experience (Years)</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="teaching_exp"
+                          value={formData.teaching_exp || ''}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{viewDetails.teaching_exp || '-'}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Qualification</label>
-                      <p className="text-sm text-gray-900">{formatQualification(viewDetails.qualification)}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Qualification</label>
+                      {isEditing ? (
+                        <textarea
+                          name="qualification"
+                          value={typeof formData.qualification === 'string' ? formData.qualification : JSON.stringify(formData.qualification || '')}
+                          onChange={handleChange}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                          placeholder="Enter qualification (JSON format or plain text)"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{formatQualification(viewDetails.qualification)}</p>
+                      )}
                     </div>
                     <div className="md:col-span-2">
-                      <label className="text-xs font-medium text-gray-500">Area of Work</label>
-                      <p className="text-sm text-gray-900">{formatAreaOfWork(viewDetails.area_of_work)}</p>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Area of Work</label>
+                      {isEditing ? (
+                        <textarea
+                          name="area_of_work"
+                          value={typeof formData.area_of_work === 'string' ? formData.area_of_work : JSON.stringify(formData.area_of_work || '')}
+                          onChange={handleChange}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                          placeholder="Enter area of work (JSON format or plain text)"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-900">{formatAreaOfWork(viewDetails.area_of_work)}</p>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Institution Information (if Institutional) */}
-                {viewDetails.membership_type === 'Institutional' && (
+                {(viewDetails.membership_type === 'Institutional' || (isEditing && formData.membership_type === 'Institutional')) && (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <Building className="mr-2 text-teal-600" size={20} />
@@ -1070,24 +1593,74 @@ const MembershipManagement = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                       <div className="md:col-span-2">
-                        <label className="text-xs font-medium text-gray-500">Institution Name</label>
-                        <p className="text-sm text-gray-900 font-medium">{viewDetails.name_institution || '-'}</p>
+                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Institution Name</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            name="name_institution"
+                            value={formData.name_institution || ''}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{viewDetails.name_institution || '-'}</p>
+                        )}
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-gray-500">Institution Type</label>
-                        <p className="text-sm text-gray-900">{viewDetails.type_institution || '-'}</p>
+                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Institution Type</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            name="type_institution"
+                            value={formData.type_institution || ''}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{viewDetails.type_institution || '-'}</p>
+                        )}
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-gray-500">Other Type</label>
-                        <p className="text-sm text-gray-900">{viewDetails.other_institution || '-'}</p>
+                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Other Type</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            name="other_institution"
+                            value={formData.other_institution || ''}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{viewDetails.other_institution || '-'}</p>
+                        )}
                       </div>
                       <div className="md:col-span-2">
-                        <label className="text-xs font-medium text-gray-500">Institution Address</label>
-                        <p className="text-sm text-gray-900">{viewDetails.address_institution || '-'}</p>
+                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Institution Address</label>
+                        {isEditing ? (
+                          <textarea
+                            name="address_institution"
+                            value={formData.address_institution || ''}
+                            onChange={handleChange}
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{viewDetails.address_institution || '-'}</p>
+                        )}
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-gray-500">Contact Person</label>
-                        <p className="text-sm text-gray-900">{viewDetails.contact_person || '-'}</p>
+                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Contact Person</label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            name="contact_person"
+                            value={formData.contact_person || ''}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                          />
+                        ) : (
+                          <p className="text-sm text-gray-900">{viewDetails.contact_person || '-'}</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1101,11 +1674,11 @@ const MembershipManagement = () => {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Created At</label>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Created At</label>
                       <p className="text-sm text-gray-900">{formatDate(viewDetails.created_at)}</p>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500">Last Updated</label>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Last Updated</label>
                       <p className="text-sm text-gray-900">{formatDate(viewDetails.updated_at)}</p>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search,
   Eye,
@@ -24,30 +24,34 @@ import ConfirmModal from '../components/ConfirmModal';
 
 const DRFManagement = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
   const [drfs, setDrfs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState([]);
   const [confirmState, setConfirmState] = useState({ open: false, ids: [], message: '', confirming: false });
 
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [perPage, setPerPage] = useState(10);
 
-  // Filter and sort state
-  const [searchTerm, setSearchTerm] = useState('');
+  // Filter and sort state - initialize from URL params
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('desc');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [appliedStartDate, setAppliedStartDate] = useState('');
-  const [appliedEndDate, setAppliedEndDate] = useState('');
-  const [conferenceFilter, setConferenceFilter] = useState('9th_conference'); // Default to 9th conference
+  const [sortBy, setSortBy] = useState(searchParams.get('sort_by') || 'created_at');
+  const [sortOrder, setSortOrder] = useState(searchParams.get('sort_order') || 'desc');
+  const [startDate, setStartDate] = useState(searchParams.get('start_date') || '');
+  const [endDate, setEndDate] = useState(searchParams.get('end_date') || '');
+  const [appliedStartDate, setAppliedStartDate] = useState(searchParams.get('start_date') || '');
+  const [appliedEndDate, setAppliedEndDate] = useState(searchParams.get('end_date') || '');
+  const [conferenceFilter, setConferenceFilter] = useState(searchParams.get('conference_filter') || '9th_conference');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState(searchParams.get('payment_status') || 'all');
+  const [pageInput, setPageInput] = useState('');
 
   // Fetch DRF records
-  const fetchDRFs = async () => {
+  const fetchDRFs = React.useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await drfAPI.getDRFs({
@@ -59,6 +63,7 @@ const DRFManagement = () => {
         start_date: appliedStartDate,
         end_date: appliedEndDate,
         conference_filter: conferenceFilter,
+        payment_status: paymentStatusFilter,
       });
 
       if (response.status) {
@@ -72,11 +77,38 @@ const DRFManagement = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, perPage, debouncedSearchTerm, sortBy, sortOrder, appliedStartDate, appliedEndDate, conferenceFilter, paymentStatusFilter]);
 
   // Handle view
   const handleView = (id) => {
-    navigate(`/admin/drfs/${id}`);
+    // Preserve query parameters when navigating to view/edit
+    const params = new URLSearchParams();
+    if (conferenceFilter && conferenceFilter !== '9th_conference') {
+      params.set('conference_filter', conferenceFilter);
+    }
+    if (paymentStatusFilter && paymentStatusFilter !== 'all') {
+      params.set('payment_status', paymentStatusFilter);
+    }
+    if (appliedStartDate) {
+      params.set('start_date', appliedStartDate);
+    }
+    if (appliedEndDate) {
+      params.set('end_date', appliedEndDate);
+    }
+    if (searchTerm) {
+      params.set('search', searchTerm);
+    }
+    if (sortBy && sortBy !== 'created_at') {
+      params.set('sort_by', sortBy);
+    }
+    if (sortOrder && sortOrder !== 'desc') {
+      params.set('sort_order', sortOrder);
+    }
+    if (currentPage > 1) {
+      params.set('page', currentPage.toString());
+    }
+    const queryString = params.toString();
+    navigate(`/admin/drfs/${id}${queryString ? `?${queryString}` : ''}`);
   };
 
   // Handle export
@@ -91,6 +123,7 @@ const DRFManagement = () => {
         start_date: appliedStartDate,
         end_date: appliedEndDate,
         conference_filter: conferenceFilter,
+        payment_status: paymentStatusFilter,
         selected_ids: selectedIds.length > 0 ? selectedIds : undefined, // Export selected records if any, otherwise export filtered records
       });
 
@@ -176,9 +209,80 @@ const DRFManagement = () => {
     requestDelete(selectedIds);
   };
 
+  // Sync state from URL params when they change (e.g., browser back/forward)
+  useEffect(() => {
+    const urlConferenceFilter = searchParams.get('conference_filter') || '9th_conference';
+    const urlPaymentStatusFilter = searchParams.get('payment_status') || 'all';
+    const urlStartDate = searchParams.get('start_date') || '';
+    const urlEndDate = searchParams.get('end_date') || '';
+    const urlSearch = searchParams.get('search') || '';
+    const urlSortBy = searchParams.get('sort_by') || 'created_at';
+    const urlSortOrder = searchParams.get('sort_order') || 'desc';
+    const urlPage = parseInt(searchParams.get('page')) || 1;
+
+    if (urlConferenceFilter !== conferenceFilter) {
+      setConferenceFilter(urlConferenceFilter);
+    }
+    if (urlPaymentStatusFilter !== paymentStatusFilter) {
+      setPaymentStatusFilter(urlPaymentStatusFilter);
+    }
+    if (urlStartDate !== appliedStartDate) {
+      setAppliedStartDate(urlStartDate);
+      setStartDate(urlStartDate);
+    }
+    if (urlEndDate !== appliedEndDate) {
+      setAppliedEndDate(urlEndDate);
+      setEndDate(urlEndDate);
+    }
+    if (urlSearch !== searchTerm) {
+      setSearchTerm(urlSearch);
+    }
+    if (urlSortBy !== sortBy) {
+      setSortBy(urlSortBy);
+    }
+    if (urlSortOrder !== sortOrder) {
+      setSortOrder(urlSortOrder);
+    }
+    if (urlPage !== currentPage) {
+      setCurrentPage(urlPage);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     fetchDRFs();
-  }, [currentPage, perPage, debouncedSearchTerm, sortBy, sortOrder, appliedStartDate, appliedEndDate, conferenceFilter]);
+  }, [fetchDRFs]);
+
+  // Update URL params when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (conferenceFilter && conferenceFilter !== '9th_conference') {
+      params.set('conference_filter', conferenceFilter);
+    }
+    if (paymentStatusFilter && paymentStatusFilter !== 'all') {
+      params.set('payment_status', paymentStatusFilter);
+    }
+    if (appliedStartDate) {
+      params.set('start_date', appliedStartDate);
+    }
+    if (appliedEndDate) {
+      params.set('end_date', appliedEndDate);
+    }
+    if (searchTerm) {
+      params.set('search', searchTerm);
+    }
+    if (sortBy && sortBy !== 'created_at') {
+      params.set('sort_by', sortBy);
+    }
+    if (sortOrder && sortOrder !== 'desc') {
+      params.set('sort_order', sortOrder);
+    }
+    if (currentPage > 1) {
+      params.set('page', currentPage.toString());
+    }
+    
+    // Update URL without causing a navigation
+    setSearchParams(params, { replace: true });
+  }, [conferenceFilter, paymentStatusFilter, appliedStartDate, appliedEndDate, searchTerm, sortBy, sortOrder, currentPage, setSearchParams]);
 
   // Handle search
   const handleSearch = (e) => {
@@ -220,6 +324,46 @@ const DRFManagement = () => {
       setSortOrder('asc');
     }
     setCurrentPage(1);
+  };
+
+  // Handle page input change
+  const handlePageInputChange = (e) => {
+    setPageInput(e.target.value);
+  };
+
+  // Handle page input Enter key
+  const handlePageInputKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      const page = parseInt(pageInput);
+      if (!isNaN(page) && page >= 1 && page <= totalPages) {
+        if (page !== currentPage) {
+          setCurrentPage(page);
+        }
+        setPageInput('');
+      } else {
+        toast.error(`Please enter a valid page number between 1 and ${totalPages}`);
+        setPageInput('');
+      }
+    }
+  };
+
+  // Handle page input blur (click outside)
+  const handlePageInputBlur = () => {
+    if (pageInput.trim() !== '') {
+      const page = parseInt(pageInput);
+      if (!isNaN(page) && page >= 1 && page <= totalPages) {
+        if (page !== currentPage) {
+          setCurrentPage(page);
+        }
+        setPageInput('');
+      } else {
+        toast.error(`Please enter a valid page number between 1 and ${totalPages}`);
+        setPageInput('');
+      }
+    } else {
+      // If input is empty, just clear it
+      setPageInput('');
+    }
   };
 
   // Update getSortIcon to always show both icons, with the active one filled/dark and the inactive one light/outline
@@ -357,6 +501,21 @@ const DRFManagement = () => {
                 <option value="all">All Conferences</option>
               </select>
             </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={paymentStatusFilter}
+                onChange={(e) => {
+                  setPaymentStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+              >
+                <option value="all">All Payment Status</option>
+                <option value="paid">Paid</option>
+                <option value="unpaid">Unpaid</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
           </div>
           
           {/* Date Filters */}
@@ -417,40 +576,22 @@ const DRFManagement = () => {
                     onChange={toggleSelectAll}
                   />
                 </th>
-                <th
-                  onClick={() => handleSort('id')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                >
-                  <div className="flex items-center gap-2">
-                    ID
-                    {getSortIcon('id')}
-                  </div>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Delegate
+                  Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contact
+                  Phone
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Institution
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Location
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Areas
+                  Payment Status
                 </th>
                 <th onClick={() => handleSort('created_at')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
                   <div className="flex items-center gap-2">
-                    Created
+                    Created Date
                     {getSortIcon('created_at')}
-                  </div>
-                </th>
-                <th onClick={() => handleSort('updated_at')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
-                  <div className="flex items-center gap-2">
-                    Updated
-                    {getSortIcon('updated_at')}
                   </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -469,57 +610,43 @@ const DRFManagement = () => {
                     />
                   </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {drf.id}
+                    {drf.pre_title} {drf.name || 'N/A'}
                   </td>
-                  <td className="px-6 py-3 text-sm">
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        {drf.pre_title} {drf.name || 'N/A'}
-                      </div>
-                      <div className="text-gray-500 text-xs">
-                        {drf.you_are_register_as || '-'}
-                      </div>
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                    <div className="flex items-center gap-1">
+                      <Mail size={14} className="text-gray-400" />
+                      <span>{drf.email || '-'}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-3 text-sm text-gray-900">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1">
-                        <Mail size={12} className="text-gray-400" />
-                        <span className="text-xs">{drf.email || '-'}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Phone size={12} className="text-gray-400" />
-                        <span className="text-xs">+{drf.country_code || ''} {drf.phone_no || '-'}</span>
-                      </div>
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                    <div className="flex items-center gap-1">
+                      <Phone size={14} className="text-gray-400" />
+                      <span>+{drf.country_code || ''} {drf.phone_no || '-'}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-3 text-sm text-gray-500 max-w-xs">
-                    <div className="font-medium text-gray-900">
-                      {truncateText(drf.institution, 40)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-3 text-sm text-gray-500">
-                    {drf.city || '-'}, {drf.state || '-'}
-                  </td>
-                  <td className="px-6 py-3 text-sm text-gray-500">
-                    {truncateText(drf.areas, 30)}
+                  <td className="px-6 py-3 whitespace-nowrap text-sm">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      drf.payment_status === 'paid' || drf.payment_status === 'success'
+                        ? 'bg-green-100 text-green-800'
+                        : drf.payment_status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : drf.payment_status === 'failed'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {drf.payment_status ? drf.payment_status.charAt(0).toUpperCase() + drf.payment_status.slice(1) : 'Pending'}
+                    </span>
                   </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center gap-1">
-                      <Calendar size={12} className="text-gray-400" />
+                      <Calendar size={14} className="text-gray-400" />
                       {formatDate(drf.created_at)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Calendar size={12} className="text-gray-400" />
-                      {formatDate(drf.updated_at)}
                     </div>
                   </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => navigate(`/admin/drfs/${drf.id}`)}
+                        onClick={() => handleView(drf.id)}
                         title="View"
                         aria-label="View"
                         className="p-2 rounded hover:bg-gray-100 text-teal-600 hover:text-teal-700 transition-colors"
@@ -527,7 +654,7 @@ const DRFManagement = () => {
                         <Eye size={16} />
                       </button>
                       <button
-                        onClick={() => navigate(`/admin/drfs/${drf.id}`)}
+                        onClick={() => handleView(drf.id)}
                         title="Edit"
                         aria-label="Edit"
                         className="p-2 rounded hover:bg-gray-100 text-blue-600 hover:text-blue-700 transition-colors"
@@ -595,7 +722,7 @@ const DRFManagement = () => {
                     <span className="font-medium">{totalRecords}</span> results
                   </p>
                 </div>
-                <div>
+                <div className="flex items-center gap-3">
                   <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                     <button
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -625,6 +752,21 @@ const DRFManagement = () => {
                       <ChevronRight size={20} />
                     </button>
                   </nav>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-700">Go to page:</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalPages}
+                      value={pageInput}
+                      onChange={handlePageInputChange}
+                      onKeyPress={handlePageInputKeyPress}
+                      onBlur={handlePageInputBlur}
+                      placeholder={currentPage.toString()}
+                      className="w-20 px-3 py-1.5 border border-gray-300 rounded-md text-sm text-center focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                    <span className="text-sm text-gray-500">of {totalPages}</span>
+                  </div>
                 </div>
               </div>
             </div>

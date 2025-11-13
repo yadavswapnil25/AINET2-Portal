@@ -37,6 +37,26 @@ export const useExportMemberships = () => {
 };
 
 /**
+ * Hook to update membership
+ */
+export const useUpdateMembership = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation(
+    ({ id, data }) => membershipService.updateMembership(id, data),
+    {
+      onSuccess: () => {
+        // Invalidate and refetch memberships
+        queryClient.invalidateQueries('memberships');
+      },
+      onError: (error) => {
+        console.error('Update failed:', error);
+      },
+    }
+  );
+};
+
+/**
  * Hook to delete membership (soft delete)
  */
 export const useDeleteMembership = () => {

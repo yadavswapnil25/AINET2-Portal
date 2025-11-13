@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { 
   ArrowLeft,
@@ -21,6 +21,7 @@ import { formatTitleCase } from '../utils/formatters';
 const DRFView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [drf, setDrf] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -105,7 +106,12 @@ const DRFView = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate('/admin/drfs')}
+            onClick={() => {
+              // Preserve query parameters when navigating back
+              const searchParams = new URLSearchParams(location.search);
+              const queryString = searchParams.toString();
+              navigate(`/admin/drfs${queryString ? `?${queryString}` : ''}`);
+            }}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <ArrowLeft className="text-gray-600" size={24} />
@@ -157,7 +163,7 @@ const DRFView = () => {
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700">Title</label>
+                <label className="text-sm font-bold text-gray-700">Title</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -171,7 +177,7 @@ const DRFView = () => {
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Full Name</label>
+                <label className="text-sm font-bold text-gray-700">Full Name</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -185,7 +191,7 @@ const DRFView = () => {
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Member Status</label>
+                <label className="text-sm font-bold text-gray-700">Member Status</label>
                 {isEditing ? (
                   <select
                     name="member"
@@ -210,7 +216,7 @@ const DRFView = () => {
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Registration Type</label>
+                <label className="text-sm font-bold text-gray-700">Registration Type</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -224,7 +230,7 @@ const DRFView = () => {
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Age</label>
+                <label className="text-sm font-bold text-gray-700">Age</label>
                 {isEditing ? (
                   <input
                     type="number"
@@ -238,7 +244,7 @@ const DRFView = () => {
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Gender</label>
+                <label className="text-sm font-bold text-gray-700">Gender</label>
                 {isEditing ? (
                   <select
                     name="gender"
@@ -266,7 +272,7 @@ const DRFView = () => {
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                <label className="text-sm font-bold text-gray-700 flex items-center gap-1">
                   <Mail size={16} className="text-gray-500" />
                   Email
                 </label>
@@ -285,7 +291,7 @@ const DRFView = () => {
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                <label className="text-sm font-bold text-gray-700 flex items-center gap-1">
                   <Phone size={16} className="text-gray-500" />
                   Phone
                 </label>
@@ -325,7 +331,7 @@ const DRFView = () => {
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                <label className="text-sm font-bold text-gray-700 flex items-center gap-1">
                   <Briefcase size={16} className="text-gray-500" />
                   Institution
                 </label>
@@ -342,7 +348,7 @@ const DRFView = () => {
                 )}
               </div>
               <div className="md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Address</label>
+                <label className="text-sm font-bold text-gray-700">Address</label>
                 {isEditing ? (
                   <textarea
                     name="address"
@@ -356,7 +362,7 @@ const DRFView = () => {
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">City</label>
+                <label className="text-sm font-bold text-gray-700">City</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -370,7 +376,7 @@ const DRFView = () => {
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">State</label>
+                <label className="text-sm font-bold text-gray-700">State</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -384,7 +390,7 @@ const DRFView = () => {
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Pincode</label>
+                <label className="text-sm font-bold text-gray-700">Pincode</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -408,7 +414,7 @@ const DRFView = () => {
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Conference Activities</label>
+                <label className="text-sm font-bold text-gray-700">Conference Activities</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -422,7 +428,7 @@ const DRFView = () => {
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Conference Attendance</label>
+                <label className="text-sm font-bold text-gray-700">Conference Attendance</label>
                 {isEditing ? (
                   <select
                     name="conference_attendance"
@@ -442,7 +448,7 @@ const DRFView = () => {
                 )}
               </div>
               <div className="md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Areas of Interest</label>
+                <label className="text-sm font-bold text-gray-700">Areas of Interest</label>
                 {isEditing ? (
                   <textarea
                     name="areas"
@@ -457,12 +463,12 @@ const DRFView = () => {
               </div>
               {drf.area_special && (
                 <div className="md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700">Special Area</label>
+                  <label className="text-sm font-bold text-gray-700">Special Area</label>
                   <p className="text-gray-900">{drf.area_special}</p>
                 </div>
               )}
               <div>
-                <label className="text-sm font-medium text-gray-700">Experience</label>
+                <label className="text-sm font-bold text-gray-700">Experience</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -485,13 +491,13 @@ const DRFView = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {drf.creative_work && (
                   <div className="md:col-span-2">
-                    <label className="text-sm font-medium text-gray-700">Creative Work</label>
+                    <label className="text-sm font-bold text-gray-700">Creative Work</label>
                     <p className="text-gray-900">{drf.creative_work}</p>
                   </div>
                 )}
                 {drf.student_images && (
                   <div className="md:col-span-2">
-                    <label className="text-sm font-medium text-gray-700">Student Images/File</label>
+                    <label className="text-sm font-bold text-gray-700">Student Images/File</label>
                     <p className="text-gray-900">{drf.student_images}</p>
                   </div>
                 )}
@@ -507,19 +513,19 @@ const DRFView = () => {
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700">Created At</label>
+                <label className="text-sm font-bold text-gray-700">Created At</label>
                 <p className="text-gray-900">
                   {new Date(drf.created_at).toLocaleString()}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Last Updated</label>
+                <label className="text-sm font-bold text-gray-700">Last Updated</label>
                 <p className="text-gray-900">
                   {new Date(drf.updated_at).toLocaleString()}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Status</label>
+                <label className="text-sm font-bold text-gray-700">Status</label>
                 <p className="text-gray-900">
                   {drf.status || 'Pending'}
                 </p>

@@ -21,6 +21,7 @@ const NewsManagement = () => {
   const [sortBy, setSortBy] = useState('sort_order');
   const [sortOrder, setSortOrder] = useState('asc');
   const [isActive, setIsActive] = useState('');
+  const [pageInput, setPageInput] = useState('');
 
   // Create/Edit modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -267,6 +268,43 @@ const NewsManagement = () => {
     return pages;
   };
 
+  // Handle page input change
+  const handlePageInputChange = (e) => {
+    setPageInput(e.target.value);
+  };
+
+  // Handle page input Enter key
+  const handlePageInputKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      const page = parseInt(pageInput);
+      if (!isNaN(page) && page >= 1 && page <= totalPages) {
+        setCurrentPage(page);
+        setPageInput('');
+      } else {
+        toast.error(`Please enter a valid page number between 1 and ${totalPages}`);
+        setPageInput('');
+      }
+    }
+  };
+
+  // Handle page input blur (click outside)
+  const handlePageInputBlur = () => {
+    if (pageInput.trim() !== '') {
+      const page = parseInt(pageInput);
+      if (!isNaN(page) && page >= 1 && page <= totalPages) {
+        if (page !== currentPage) {
+          setCurrentPage(page);
+        }
+        setPageInput('');
+      } else {
+        toast.error(`Please enter a valid page number between 1 and ${totalPages}`);
+        setPageInput('');
+      }
+    } else {
+      setPageInput('');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -410,7 +448,7 @@ const NewsManagement = () => {
                   <span className="font-medium">{totalRecords}</span> results
                 </p>
               </div>
-              <div>
+              <div className="flex items-center gap-3">
                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                   <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage===1} className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
                     <ChevronLeft size={20} />
@@ -424,6 +462,21 @@ const NewsManagement = () => {
                     <ChevronRight size={20} />
                   </button>
                 </nav>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-700">Go to page:</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalPages}
+                      value={pageInput}
+                      onChange={handlePageInputChange}
+                      onKeyPress={handlePageInputKeyPress}
+                      onBlur={handlePageInputBlur}
+                      placeholder={currentPage.toString()}
+                      className="w-20 px-3 py-1.5 border border-gray-300 rounded-md text-sm text-center focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                  <span className="text-sm text-gray-500">of {totalPages}</span>
+                </div>
               </div>
             </div>
           </div>

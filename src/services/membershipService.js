@@ -43,6 +43,19 @@ export const membershipService = {
   },
 
   /**
+   * Update membership record
+   */
+  updateMembership: async (id, data) => {
+    try {
+      const response = await apiClient.put(`/client/admin/memberships/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating membership:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Soft delete membership record
    */
   deleteMembership: async (id) => {

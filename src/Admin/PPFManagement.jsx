@@ -43,9 +43,10 @@ const PPFManagement = () => {
   const [endDate, setEndDate] = useState('');
   const [appliedStartDate, setAppliedStartDate] = useState('');
   const [appliedEndDate, setAppliedEndDate] = useState('');
+  const [pageInput, setPageInput] = useState('');
 
   // Fetch PPF records
-  const fetchPPFs = async () => {
+  const fetchPPFs = React.useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await ppfAPI.getPPFs({
@@ -69,7 +70,7 @@ const PPFManagement = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, perPage, debouncedSearchTerm, sortBy, sortOrder, appliedStartDate, appliedEndDate]);
 
   // Handle view
   const handleView = (id) => {
@@ -192,7 +193,7 @@ const PPFManagement = () => {
 
   useEffect(() => {
     fetchPPFs();
-  }, [currentPage, perPage, debouncedSearchTerm, sortBy, sortOrder, appliedStartDate, appliedEndDate]);
+  }, [fetchPPFs]);
 
   // Handle search
   const handleSearch = (e) => {
@@ -234,6 +235,44 @@ const PPFManagement = () => {
       setSortOrder('asc');
     }
     setCurrentPage(1);
+  };
+
+  // Handle page input change
+  const handlePageInputChange = (e) => {
+    setPageInput(e.target.value);
+  };
+
+  // Handle page input Enter key
+  const handlePageInputKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      const page = parseInt(pageInput);
+      if (!isNaN(page) && page >= 1 && page <= totalPages) {
+        setCurrentPage(page);
+        setPageInput('');
+      } else {
+        toast.error(`Please enter a valid page number between 1 and ${totalPages}`);
+        setPageInput('');
+      }
+    }
+  };
+
+  // Handle page input blur (click outside)
+  const handlePageInputBlur = () => {
+    if (pageInput.trim() !== '') {
+      const page = parseInt(pageInput);
+      if (!isNaN(page) && page >= 1 && page <= totalPages) {
+        if (page !== currentPage) {
+          setCurrentPage(page);
+        }
+        setPageInput('');
+      } else {
+        toast.error(`Please enter a valid page number between 1 and ${totalPages}`);
+        setPageInput('');
+      }
+    } else {
+      // If input is empty, just clear it
+      setPageInput('');
+    }
   };
 
   // Update getSortIcon
@@ -608,7 +647,7 @@ const PPFManagement = () => {
                     <span className="font-medium">{totalRecords}</span> results
                   </p>
                 </div>
-                <div>
+                <div className="flex items-center gap-3">
                   <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                     <button
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -639,6 +678,21 @@ const PPFManagement = () => {
                       <ChevronRight size={20} />
                     </button>
                   </nav>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-700">Go to page:</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max={totalPages}
+                        value={pageInput}
+                        onChange={handlePageInputChange}
+                        onKeyPress={handlePageInputKeyPress}
+                        onBlur={handlePageInputBlur}
+                        placeholder={currentPage.toString()}
+                        className="w-20 px-3 py-1.5 border border-gray-300 rounded-md text-sm text-center focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                      />
+                    <span className="text-sm text-gray-500">of {totalPages}</span>
+                  </div>
                 </div>
               </div>
             </div>

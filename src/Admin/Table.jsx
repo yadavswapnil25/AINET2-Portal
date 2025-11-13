@@ -68,6 +68,8 @@ const RoleBadge = ({ role }) => {
 
 // Pagination Component
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  const [pageInput, setPageInput] = React.useState('');
+
   const getPageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
@@ -95,6 +97,41 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     }
     
     return pages;
+  };
+
+  // Handle page input change
+  const handlePageInputChange = (e) => {
+    setPageInput(e.target.value);
+  };
+
+  // Handle page input Enter key
+  const handlePageInputKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      const page = parseInt(pageInput);
+      if (!isNaN(page) && page >= 1 && page <= totalPages) {
+        onPageChange(page);
+        setPageInput('');
+      } else {
+        setPageInput('');
+      }
+    }
+  };
+
+  // Handle page input blur (click outside)
+  const handlePageInputBlur = () => {
+    if (pageInput.trim() !== '') {
+      const page = parseInt(pageInput);
+      if (!isNaN(page) && page >= 1 && page <= totalPages) {
+        if (page !== currentPage) {
+          onPageChange(page);
+        }
+        setPageInput('');
+      } else {
+        setPageInput('');
+      }
+    } else {
+      setPageInput('');
+    }
   };
 
   return (
@@ -139,8 +176,24 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
           </button>
         </div>
         
-        <div className="text-xs text-gray-500">
-          Page {currentPage} of {totalPages}
+        <div className="flex items-center gap-3">
+          <div className="text-xs text-gray-500">
+            Page {currentPage} of {totalPages}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-700">Go to:</span>
+            <input
+              type="number"
+              min="1"
+              max={totalPages}
+              value={pageInput}
+              onChange={handlePageInputChange}
+              onKeyPress={handlePageInputKeyPress}
+              onBlur={handlePageInputBlur}
+              placeholder={currentPage.toString()}
+              className="w-16 px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            />
+          </div>
         </div>
       </div>
     </div>

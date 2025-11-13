@@ -236,6 +236,9 @@ export const drfAPI = {
     if (params.end_date) {
       queryParams.append('end_date', params.end_date);
     }
+    if (params.payment_status && params.payment_status !== 'all') {
+      queryParams.append('payment_status', params.payment_status);
+    }
     const response = await apiClient.get(`/client/admin/drf?${queryParams}`);
     return response.data;
   },
@@ -261,6 +264,9 @@ export const drfAPI = {
     }
     if (params.end_date) {
       queryParams.append('end_date', params.end_date);
+    }
+    if (params.payment_status && params.payment_status !== 'all') {
+      queryParams.append('payment_status', params.payment_status);
     }
     // Add selected IDs if provided
     if (params.selected_ids && Array.isArray(params.selected_ids) && params.selected_ids.length > 0) {

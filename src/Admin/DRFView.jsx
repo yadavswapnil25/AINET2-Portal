@@ -230,15 +230,23 @@ const DRFView = () => {
                 )}
               </div>
               <div>
-                <label className="text-sm font-bold text-gray-700">Age</label>
+                <label className="text-sm font-bold text-gray-700">Age Group</label>
                 {isEditing ? (
-                  <input
-                    type="number"
+                  <select
                     name="age"
                     value={formData.age || ''}
                     onChange={handleChange}
                     className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
+                  >
+                    <option value="">Select Age Group</option>
+                    <option value="up to 25">up to 25</option>
+                    <option value="26-30">26-30</option>
+                    <option value="31-35">31-35</option>
+                    <option value="36-40">36-40</option>
+                    <option value="41-45">41-45</option>
+                    <option value="46-50">46-50</option>
+                    <option value="over 50">over 50</option>
+                  </select>
                 ) : (
                   <p className="text-gray-900">{drf.age || '-'}</p>
                 )}

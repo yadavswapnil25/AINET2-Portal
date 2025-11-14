@@ -34,8 +34,18 @@ jobs:
       - name: Archive production build
         run: zip -r react-build.zip dist  # 'build' for CRA, 'dist' for Vite
 
+      # 5. Create target directory on server
+      - name: Create target directory on server
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            mkdir -p /root/react
+            mkdir -p /var/www/ainet2-admin-build
 
-      # 5. Upload build zip to server
+      # 6. Upload build zip to server
       - name: Upload build to server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -44,8 +54,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "react-build.zip"
           target: "/root/react/"
+          overwrite: true
 
-      # 6. SSH into server to deploy
+      # 7. SSH into server to deploy
       - name: Deploy on server via SSH
         uses: appleboy/ssh-action@v0.1.10
         with:

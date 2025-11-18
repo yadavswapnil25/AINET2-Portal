@@ -507,14 +507,6 @@ const MembershipManagement = () => {
               </button>
             )}
             <button
-              onClick={() => refetch()}
-              disabled={isLoading}
-              className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:bg-gray-400 shadow-md"
-            >
-              <RefreshCw className={`mr-2 ${isLoading ? 'animate-spin' : ''}`} size={18} />
-              Refresh
-            </button>
-            <button
               onClick={handleExport}
               disabled={isExporting}
               className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 shadow-md"

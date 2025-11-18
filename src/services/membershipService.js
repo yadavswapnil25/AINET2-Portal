@@ -15,6 +15,19 @@ export const membershipService = {
   },
 
   /**
+   * Get single membership record by ID
+   */
+  getMembership: async (id) => {
+    try {
+      const response = await apiClient.get(`/client/admin/memberships/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching membership:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Export membership data as CSV
    */
   exportMemberships: async (params = {}) => {

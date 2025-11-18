@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useMemberships, useExportMemberships, useDeleteMembership, useBulkDeleteMemberships, useUpdateMembership } from '../hooks/useMemberships';
+import { membershipService } from '../services/membershipService';
 import toast from 'react-hot-toast';
 import { 
   Users, 
@@ -154,10 +155,68 @@ const MembershipManagement = () => {
     setDeleteConfirm({ id, name });
   };
 
-  const handleViewDetails = (membership) => {
-    setViewDetails(membership);
-    setFormData(membership);
-    setIsEditing(false);
+  const normalizeMembershipData = (membership) => {
+    if (!membership) return {};
+    
+    // Normalize field names to ensure consistency
+    return {
+      ...membership,
+      // Normalize addMonths field (handle both addMonths and add_months)
+      addMonths: membership.addMonths ?? membership.add_months ?? null,
+      // Ensure all fields exist even if null/undefined
+      m_id: membership.m_id || membership.id || null,
+      ref: membership.ref || null,
+      title: membership.title || null,
+      name: membership.name || null,
+      first_name: membership.first_name || null,
+      last_name: membership.last_name || null,
+      gender: membership.gender || null,
+      age_groups: membership.age_groups || null,
+      email: membership.email || null,
+      mobile: membership.mobile || null,
+      whatsapp_no: membership.whatsapp_no || null,
+      address: membership.address || null,
+      state: membership.state || null,
+      district: membership.district || null,
+      pin: membership.pin || null,
+      teaching_exp: membership.teaching_exp || null,
+      qualification: membership.qualification || null,
+      area_of_work: membership.area_of_work || null,
+      membership_type: membership.membership_type || null,
+      membership_plan: membership.membership_plan || null,
+      member_date: membership.member_date || null,
+      has_member_any: membership.has_member_any ?? false,
+      name_association: membership.name_association || null,
+      expectation: membership.expectation || null,
+      has_newsletter: membership.has_newsletter ?? false,
+      name_institution: membership.name_institution || null,
+      address_institution: membership.address_institution || null,
+      type_institution: membership.type_institution || null,
+      other_institution: membership.other_institution || null,
+      contact_person: membership.contact_person || null,
+      status: membership.status !== undefined ? membership.status : 1,
+    };
+  };
+
+  const handleViewDetails = async (membership) => {
+    try {
+      // Fetch full membership data to ensure all fields are available
+      const response = await membershipService.getMembership(membership.id);
+      const fullMembership = response.data?.membership || membership;
+      const normalizedMembership = normalizeMembershipData(fullMembership);
+      
+      setViewDetails(normalizedMembership);
+      setFormData(normalizedMembership);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error fetching membership details:', error);
+      // Fallback to using the membership from list if API call fails
+      const normalizedMembership = normalizeMembershipData(membership);
+      setViewDetails(normalizedMembership);
+      setFormData(normalizedMembership);
+      setIsEditing(false);
+      toast.error('Failed to load full membership details. Some fields may be missing.');
+    }
   };
 
   const closeDetailsModal = () => {
@@ -166,9 +225,28 @@ const MembershipManagement = () => {
     setFormData({});
   };
 
-  const handleEdit = () => {
-    setIsEditing(true);
-    setFormData(viewDetails);
+  const handleEdit = async () => {
+    try {
+      // Ensure we have the latest data before editing
+      if (viewDetails?.id) {
+        const response = await membershipService.getMembership(viewDetails.id);
+        const fullMembership = response.data?.membership || viewDetails;
+        const normalizedMembership = normalizeMembershipData(fullMembership);
+        setViewDetails(normalizedMembership);
+        setFormData(normalizedMembership);
+      } else {
+        const normalizedMembership = normalizeMembershipData(viewDetails);
+        setFormData(normalizedMembership);
+      }
+      setIsEditing(true);
+    } catch (error) {
+      console.error('Error fetching membership for edit:', error);
+      // Fallback to using existing viewDetails
+      const normalizedMembership = normalizeMembershipData(viewDetails);
+      setFormData(normalizedMembership);
+      setIsEditing(true);
+      toast.error('Failed to load membership data. Some fields may be missing.');
+    }
   };
 
   const handleCancel = () => {
@@ -1187,17 +1265,24 @@ const MembershipManagement = () => {
                       )}
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Date of Birth</label>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Age Groups</label>
                       {isEditing ? (
-                        <input
-                          type="date"
-                          name="dob"
-                          value={formData.dob ? formData.dob.split(' ')[0] : ''}
+                        <select
+                          name="age_groups"
+                          value={formData.age_groups || ''}
                           onChange={handleChange}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
-                        />
+                        >
+                          <option value="">Select Age Group</option>
+                          <option value="18-25">18-25</option>
+                          <option value="26-35">26-35</option>
+                          <option value="36-45">36-45</option>
+                          <option value="46-55">46-55</option>
+                          <option value="56-65">56-65</option>
+                          <option value="66+">66+</option>
+                        </select>
                       ) : (
-                        <p className="text-sm text-gray-900">{viewDetails.dob || '-'}</p>
+                        <p className="text-sm text-gray-900">{viewDetails.age_groups || '-'}</p>
                       )}
                     </div>
                   </div>
@@ -1414,13 +1499,13 @@ const MembershipManagement = () => {
                         <input
                           type="number"
                           name="addMonths"
-                          value={formData.addMonths || ''}
+                          value={formData.addMonths ?? formData.add_months ?? ''}
                           onChange={handleChange}
                           min="1"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                         />
                       ) : (
-                        <p className="text-sm text-gray-900">{viewDetails.addMonths || viewDetails.add_months || '-'}</p>
+                        <p className="text-sm text-gray-900">{viewDetails.addMonths ?? viewDetails.add_months ?? '-'}</p>
                       )}
                     </div>
                     <div>

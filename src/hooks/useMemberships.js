@@ -135,3 +135,22 @@ export const useTrashedMemberships = (filters = {}) => {
   );
 };
 
+/**
+ * Hook to fetch single membership by ID
+ */
+export const useMembership = (id, options = {}) => {
+  return useQuery(
+    ['membership', id],
+    () => membershipService.getMembership(id),
+    {
+      enabled: !!id && options.enabled !== false,
+      staleTime: 30000,
+      refetchOnWindowFocus: false,
+      onError: (error) => {
+        console.error('Error in useMembership:', error);
+      },
+      ...options,
+    }
+  );
+};
+

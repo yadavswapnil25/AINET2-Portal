@@ -18,6 +18,7 @@ import {
   UserCog,
   Image,
   Mail,
+  Sparkles,
 } from 'lucide-react';
 import { IoHome } from "react-icons/io5";
 import { useAuth } from '../context/AuthContext';
@@ -83,6 +84,7 @@ const Sidebar = ({ isOpen, onClose }) => {
      { icon: ClipboardList, label: 'DRFs', path: '/admin/drfs' },
      { icon: UserCog, label: 'Memberships', path: '/admin/memberships' },
      { icon: IoHome, label: 'Banners', path: '/admin/banners' },
+     { icon: Sparkles, label: 'Highlights', path: '/admin/highlights' },
      { icon: Calendar, label: 'Events', path: '/admin/events' },
      { icon: Users, label: 'Partners', path: '/admin/partners' },
      { icon: Image, label: 'Gallery', path: '/admin/galleries' },

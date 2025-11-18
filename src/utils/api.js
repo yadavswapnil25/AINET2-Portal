@@ -32,6 +32,10 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // If data is FormData, let browser set Content-Type with boundary
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
     return config;
   },
   (error) => {
@@ -324,30 +328,36 @@ export const bannerAPI = {
   createBanner: async ({ title, imageFile, link_url, is_active = true, sort_order = 0, starts_at, ends_at }) => {
     const formData = new FormData();
     formData.append('title', title || '');
-    if (imageFile) formData.append('image', imageFile);
+    // Ensure imageFile is a File object before appending
+    if (imageFile && imageFile instanceof File) {
+      formData.append('image', imageFile);
+    }
     if (link_url) formData.append('link_url', link_url);
     formData.append('is_active', is_active ? '1' : '0');
     formData.append('sort_order', String(sort_order));
     if (starts_at) formData.append('starts_at', starts_at);
     if (ends_at) formData.append('ends_at', ends_at);
-    const response = await apiClient.post(`/client/admin/banners`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    // Don't set Content-Type header - let axios/browser set it with boundary
+    // Note: Image files appear as "(binary)" in network inspectors - this is normal
+    const response = await apiClient.post(`/client/admin/banners`, formData);
     return response.data;
   },
 
   updateBanner: async (id, { title, imageFile, link_url, is_active, sort_order, starts_at, ends_at }) => {
     const formData = new FormData();
     if (title !== undefined) formData.append('title', title);
-    if (imageFile) formData.append('image', imageFile);
-    if (link_url !== undefined) formData.append('link_url', link_url);
+    // Only append image if it's a File object (not null/undefined)
+    if (imageFile && imageFile instanceof File) {
+      formData.append('image', imageFile);
+    }
+    if (link_url !== undefined) formData.append('link_url', link_url || '');
     if (is_active !== undefined) formData.append('is_active', is_active ? '1' : '0');
     if (sort_order !== undefined) formData.append('sort_order', String(sort_order));
     if (starts_at !== undefined) formData.append('starts_at', starts_at || '');
     if (ends_at !== undefined) formData.append('ends_at', ends_at || '');
-    const response = await apiClient.put(`/client/admin/banners/${id}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    // Don't set Content-Type header - let axios/browser set it with boundary
+    // Note: Image files appear as "(binary)" in network inspectors - this is normal
+    const response = await apiClient.put(`/client/admin/banners/${id}`, formData);
     return response.data;
   },
 
@@ -769,6 +779,49 @@ export const websiteAPI = {
       queryParams.append('limit', params.limit);
     }
     const response = await axios.get(`${baseUrl}/client/news${queryParams.toString() ? '?' + queryParams : ''}`);
+    return response.data;
+  },
+
+  getHighlights: async () => {
+    const response = await axios.get(`${baseUrl}/client/highlights`);
+    return response.data;
+  },
+};
+
+// Highlight API methods
+export const highlightAPI = {
+  getHighlights: async () => {
+    const response = await apiClient.get(`/client/admin/highlights`);
+    return response.data;
+  },
+
+  getHighlight: async (id) => {
+    const response = await apiClient.get(`/client/admin/highlights/${id}`);
+    return response.data;
+  },
+
+  createHighlight: async ({ heading, subheading, is_active = true, sort_order = 0 }) => {
+    const response = await apiClient.post(`/client/admin/highlights`, {
+      heading,
+      subheading,
+      is_active,
+      sort_order,
+    });
+    return response.data;
+  },
+
+  updateHighlight: async (id, { heading, subheading, is_active, sort_order }) => {
+    const response = await apiClient.put(`/client/admin/highlights/${id}`, {
+      heading,
+      subheading,
+      is_active,
+      sort_order,
+    });
+    return response.data;
+  },
+
+  deleteHighlight: async (id) => {
+    const response = await apiClient.delete(`/client/admin/highlights/${id}`);
     return response.data;
   },
 };

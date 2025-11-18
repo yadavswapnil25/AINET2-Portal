@@ -1,70 +1,134 @@
-import React, { useState } from 'react';
-import { Pencil, Trash2, BadgeCheck, X, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Pencil, Trash2, BadgeCheck, X, Plus, Loader } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { highlightAPI } from '../../utils/api';
 
 const Highlights = () => {
-  const [highlightText, setHighlightText] = useState("AI-powered dashboard is live! 🎉");
-  const [highlightLink, setHighlightLink] = useState("https://example.com");
+  const [highlights, setHighlights] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newText, setNewText] = useState(highlightText);
-  const [newLink, setNewLink] = useState(highlightLink);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({ heading: 'HIGHLIGHTS', subheading: '', is_active: true, sort_order: 0 });
 
-  const handleUpdateClick = () => {
-    setNewText(highlightText);
-    setNewLink(highlightLink);
-    setIsModalOpen(true);
-  };
+  useEffect(() => {
+    fetchHighlights();
+  }, []);
 
-  const handleSave = () => {
-    setHighlightText(newText);
-    setHighlightLink(newLink);
-    setIsModalOpen(false);
-  };
-
-  const handleDelete = () => {
-    if (window.confirm("Are you sure you want to delete this highlight?")) {
-      setHighlightText("");
-      setHighlightLink("");
+  const fetchHighlights = async () => {
+    try {
+      setIsLoading(true);
+      const response = await highlightAPI.getHighlights();
+      if (response.status) {
+        setHighlights(response.data.highlights || []);
+      }
+    } catch (error) {
+      console.error('Error fetching highlights:', error);
+      toast.error('Failed to load highlights');
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const handleCreate = () => {
+    setEditing(null);
+    setForm({ heading: 'HIGHLIGHTS', subheading: '', is_active: true, sort_order: 0 });
+    setIsModalOpen(true);
+  };
+
+  const handleUpdateClick = (highlight) => {
+    setEditing(highlight);
+    setForm({
+      heading: highlight.heading || 'HIGHLIGHTS',
+      subheading: highlight.subheading || '',
+      is_active: highlight.is_active !== undefined ? highlight.is_active : true,
+      sort_order: highlight.sort_order || 0,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      if (editing) {
+        const response = await highlightAPI.updateHighlight(editing.id, form);
+        if (response.status) {
+          toast.success('Highlight updated successfully');
+          fetchHighlights();
+          setIsModalOpen(false);
+        }
+      } else {
+        const response = await highlightAPI.createHighlight(form);
+        if (response.status) {
+          toast.success('Highlight created successfully');
+          fetchHighlights();
+          setIsModalOpen(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving highlight:', error);
+      toast.error('Failed to save highlight');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this highlight?")) {
+      try {
+        const response = await highlightAPI.deleteHighlight(id);
+        if (response.status) {
+          toast.success('Highlight deleted successfully');
+          fetchHighlights();
+        }
+      } catch (error) {
+        console.error('Error deleting highlight:', error);
+        toast.error('Failed to delete highlight');
+      }
+    }
+  };
+
+  const activeHighlight = highlights.find(h => h.is_active) || highlights[0];
+
   return (
-    <div className=" relative">
+    <div className="relative">
       <div className="">
         {/* Heading */}
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Highlights</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">Highlights</h2>
+          <button
+            onClick={handleCreate}
+            className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+          >
+            <Plus size={18} className="mr-2" />
+            Add Highlight
+          </button>
+        </div>
 
-        {/* Highlight Box */}
-        {highlightText ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader className="animate-spin text-teal-600" size={24} />
+          </div>
+        ) : activeHighlight ? (
           <div className="flex flex-col sm:flex-row sm:items-start justify-between bg-slate-100 p-4 rounded-lg border border-slate-200 gap-4">
             <div className="flex-1">
               <span className="flex items-center mb-2">
-                <BadgeCheck className="text-teal-500 mr-2" size={18} />
-                <span className="text-sm font-medium text-teal-600">Current</span>
+                <BadgeCheck className={`mr-2 ${activeHighlight.is_active ? 'text-teal-500' : 'text-gray-400'}`} size={18} />
+                <span className={`text-sm font-medium ${activeHighlight.is_active ? 'text-teal-600' : 'text-gray-500'}`}>
+                  {activeHighlight.is_active ? 'Active' : 'Inactive'}
+                </span>
               </span>
-              <p className="text-gray-700 text-base">{highlightText}</p>
-              {highlightLink && (
-                <a
-                  href={highlightLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center text-blue-600 hover:underline mt-2 text-sm"
-                >
-                  <ExternalLink size={14} className="mr-1" /> Visit Link
-                </a>
-              )}
+              <p className="text-gray-800 font-semibold text-sm mb-1">{activeHighlight.heading}</p>
+              <p className="text-gray-700 text-base">{activeHighlight.subheading}</p>
             </div>
 
             {/* Action Buttons */}
             <div className="flex sm:flex-col gap-2 self-start sm:self-center">
               <button
-                onClick={handleUpdateClick}
+                onClick={() => handleUpdateClick(activeHighlight)}
                 className="flex items-center justify-center px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg shadow w-full sm:w-auto"
               >
                 <Pencil size={16} className="mr-1" />
                 Update
               </button>
               <button
-                onClick={handleDelete}
+                onClick={() => handleDelete(activeHighlight.id)}
                 className="flex items-center justify-center px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg shadow w-full sm:w-auto"
               >
                 <Trash2 size={16} className="mr-1" />
@@ -73,7 +137,43 @@ const Highlights = () => {
             </div>
           </div>
         ) : (
-          <p className="text-gray-500 italic">No highlight available</p>
+          <p className="text-gray-500 italic">No highlight available. Click "Add Highlight" to create one.</p>
+        )}
+
+        {/* All Highlights List */}
+        {highlights.length > 1 && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">All Highlights</h3>
+            <div className="space-y-3">
+              {highlights.map((highlight) => (
+                <div key={highlight.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-semibold text-gray-800">{highlight.heading}</span>
+                      {highlight.is_active && (
+                        <span className="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded">Active</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600">{highlight.subheading}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleUpdateClick(highlight)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(highlight.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Modal Popup */}
@@ -87,27 +187,54 @@ const Highlights = () => {
                 <X size={20} />
               </button>
 
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Update Highlight</h3>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">
+                {editing ? 'Update Highlight' : 'Create Highlight'}
+              </h3>
 
-              {/* Highlight Text Field */}
+              {/* Heading Field */}
               <label className="block mb-3">
-                <span className="text-sm font-medium text-gray-700">Highlight Text</span>
+                <span className="text-sm font-medium text-gray-700">Heading</span>
+                <input
+                  type="text"
+                  value={form.heading}
+                  onChange={(e) => setForm({ ...form, heading: e.target.value })}
+                  placeholder="HIGHLIGHTS"
+                  className="w-full border border-gray-300 rounded-md p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 mt-1"
+                />
+              </label>
+
+              {/* Subheading Field */}
+              <label className="block mb-3">
+                <span className="text-sm font-medium text-gray-700">Subheading</span>
                 <textarea
-                  value={newText}
-                  onChange={(e) => setNewText(e.target.value)}
+                  value={form.subheading}
+                  onChange={(e) => setForm({ ...form, subheading: e.target.value })}
+                  placeholder="9th AINET International Conference 2026 - To Be Announced SOON"
                   className="w-full border border-gray-300 rounded-md p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 mt-1"
                   rows="3"
                 />
               </label>
 
-              {/* Highlight Link Field */}
+              {/* Active Status */}
+              <label className="block mb-3">
+                <span className="text-sm font-medium text-gray-700">Status</span>
+                <select
+                  value={form.is_active ? '1' : '0'}
+                  onChange={(e) => setForm({ ...form, is_active: e.target.value === '1' })}
+                  className="w-full border border-gray-300 rounded-md p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 mt-1"
+                >
+                  <option value="1">Active</option>
+                  <option value="0">Inactive</option>
+                </select>
+              </label>
+
+              {/* Sort Order */}
               <label className="block mb-4">
-                <span className="text-sm font-medium text-gray-700">Link (optional)</span>
+                <span className="text-sm font-medium text-gray-700">Sort Order</span>
                 <input
-                  type="url"
-                  value={newLink}
-                  onChange={(e) => setNewLink(e.target.value)}
-                  placeholder="https://example.com"
+                  type="number"
+                  value={form.sort_order}
+                  onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })}
                   className="w-full border border-gray-300 rounded-md p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 mt-1"
                 />
               </label>

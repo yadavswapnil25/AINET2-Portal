@@ -109,6 +109,15 @@ const BannerManagement = () => {
       }
       let res;
       if (editing) {
+        // Log file info for debugging (image appears as "binary" in network tab - this is normal)
+        if (imageFile) {
+          console.log('Uploading image:', {
+            name: imageFile.name,
+            type: imageFile.type,
+            size: imageFile.size,
+            lastModified: new Date(imageFile.lastModified).toISOString()
+          });
+        }
         res = await bannerAPI.updateBanner(editing.id, {
           title: form.title,
           imageFile,

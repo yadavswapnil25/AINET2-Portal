@@ -1631,14 +1631,40 @@ const MembershipManagement = () => {
                     <div>
                       <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Qualification</label>
                       {isEditing ? (
-                        <textarea
+                        <select
                           name="qualification"
-                          value={typeof formData.qualification === 'string' ? formData.qualification : JSON.stringify(formData.qualification || '')}
-                          onChange={handleChange}
-                          rows={3}
+                          value={(() => {
+                            // Handle array format - get first value if array, otherwise use string value
+                            if (Array.isArray(formData.qualification)) {
+                              return formData.qualification[0] || '';
+                            }
+                            if (typeof formData.qualification === 'string') {
+                              try {
+                                const parsed = JSON.parse(formData.qualification);
+                                return Array.isArray(parsed) ? (parsed[0] || '') : formData.qualification;
+                              } catch {
+                                return formData.qualification;
+                              }
+                            }
+                            return formData.qualification || '';
+                          })()}
+                          onChange={(e) => {
+                            // Store as array format for consistency with API
+                            setFormData(prev => ({
+                              ...prev,
+                              qualification: e.target.value ? [e.target.value] : []
+                            }));
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
-                          placeholder="Enter qualification (JSON format or plain text)"
-                        />
+                        >
+                          <option value="">Select Qualification</option>
+                          <option value="B.Ed">B.Ed</option>
+                          <option value="D.Ed">D.Ed</option>
+                          <option value="M.Ed">M.Ed</option>
+                          <option value="CELTA/DELTA/TTS">CELTA/DELTA/TTS</option>
+                          <option value="PGCTE">PGCTE</option>
+                          <option value="PGDTE">PGDTE</option>
+                        </select>
                       ) : (
                         <p className="text-sm text-gray-900">{formatQualification(viewDetails.qualification)}</p>
                       )}
@@ -1646,14 +1672,40 @@ const MembershipManagement = () => {
                     <div className="md:col-span-2">
                       <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Area of Work</label>
                       {isEditing ? (
-                        <textarea
+                        <select
                           name="area_of_work"
-                          value={typeof formData.area_of_work === 'string' ? formData.area_of_work : JSON.stringify(formData.area_of_work || '')}
-                          onChange={handleChange}
-                          rows={3}
+                          value={(() => {
+                            // Handle array format - get first value if array, otherwise use string value
+                            if (Array.isArray(formData.area_of_work)) {
+                              return formData.area_of_work[0] || '';
+                            }
+                            if (typeof formData.area_of_work === 'string') {
+                              try {
+                                const parsed = JSON.parse(formData.area_of_work);
+                                return Array.isArray(parsed) ? (parsed[0] || '') : formData.area_of_work;
+                              } catch {
+                                return formData.area_of_work;
+                              }
+                            }
+                            return formData.area_of_work || '';
+                          })()}
+                          onChange={(e) => {
+                            // Store as array format for consistency with API
+                            setFormData(prev => ({
+                              ...prev,
+                              area_of_work: e.target.value ? [e.target.value] : []
+                            }));
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
-                          placeholder="Enter area of work (JSON format or plain text)"
-                        />
+                        >
+                          <option value="">Select Area of Work</option>
+                          <option value="Primary School">Primary School</option>
+                          <option value="Secondary School">Secondary School</option>
+                          <option value="Junior College (+2)">Junior College (+2)</option>
+                          <option value="Senior College/University">Senior College/University</option>
+                          <option value="Teacher Education">Teacher Education</option>
+                          <option value="Other">Other</option>
+                        </select>
                       ) : (
                         <p className="text-sm text-gray-900">{formatAreaOfWork(viewDetails.area_of_work)}</p>
                       )}

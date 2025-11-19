@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, RotateCcw } from 'lucide-react';
 import { userAPI } from '../utils/api';
 import Table from './Table';
 import UserModal from './UserModal';
@@ -31,6 +31,7 @@ const UserManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deletedFilter, setDeletedFilter] = useState('without'); // 'with', 'without', 'only'
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('add');
@@ -56,14 +57,17 @@ const UserManagement = () => {
   });
   const [errors, setErrors] = useState({});
   const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [showDeletedDropdown, setShowDeletedDropdown] = useState(false);
+  const deletedDropdownRef = useRef(null);
 
-  const fetchUsers = async (page = 1, search = '') => {
+  const fetchUsers = async (page = 1, search = '', deleted = 'without') => {
     try {
       setIsLoading(true);
       const response = await userAPI.getUsers({
         page,
         per_page: 10,
         search,
+        deleted,
         sort_by: 'created_at',
         sort_order: 'desc',
       });
@@ -112,27 +116,79 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
-    fetchUsers(currentPage, debouncedSearchTerm);
-  }, [currentPage, debouncedSearchTerm]);
+    fetchUsers(currentPage, debouncedSearchTerm, deletedFilter);
+  }, [currentPage, debouncedSearchTerm, deletedFilter]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (deletedDropdownRef.current && !deletedDropdownRef.current.contains(event.target)) {
+        setShowDeletedDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleDelete = async (userToDelete) => {
-    if (!window.confirm(`Are you sure you want to delete user "${userToDelete.name}"?`)) {
+    const isDeleted = userToDelete.status === 'inactive' || userToDelete.originalData?.deleted_at;
+    const confirmMessage = isDeleted
+      ? `Are you sure you want to PERMANENTLY DELETE user "${userToDelete.name}"? This action cannot be undone!`
+      : `Are you sure you want to delete user "${userToDelete.name}"?`;
+    
+    if (!window.confirm(confirmMessage)) {
       return;
     }
 
     try {
-      const response = await userAPI.deleteUser(userToDelete.id);
+      let response;
+      if (isDeleted) {
+        // Hard delete for already deleted users
+        response = await userAPI.forceDeleteUser(userToDelete.id);
+        if (response.status) {
+          toast.success('User permanently deleted from database');
+        }
+      } else {
+        // Soft delete for active users
+        response = await userAPI.deleteUser(userToDelete.id);
+        if (response.status) {
+          toast.success('User deleted successfully');
+        }
+      }
       
       if (response.status) {
-        toast.success('User deleted successfully');
         setSelectedUserIds((prevSelected) => prevSelected.filter((id) => id !== userToDelete.id));
-        fetchUsers(currentPage, debouncedSearchTerm);
+        fetchUsers(currentPage, debouncedSearchTerm, deletedFilter);
       } else {
         toast.error(response.message || 'Failed to delete user');
       }
     } catch (error) {
       console.error('Error deleting user:', error);
       toast.error(error.response?.data?.message || 'Failed to delete user');
+    }
+  };
+
+  const handleRestore = async (userToRestore) => {
+    if (!window.confirm(`Are you sure you want to restore user "${userToRestore.name}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await userAPI.restoreUser(userToRestore.id);
+      
+      if (response.status) {
+        toast.success('User restored successfully');
+        setSelectedUserIds((prevSelected) => prevSelected.filter((id) => id !== userToRestore.id));
+        fetchUsers(currentPage, debouncedSearchTerm, deletedFilter);
+      } else {
+        toast.error(response.message || 'Failed to restore user');
+      }
+    } catch (error) {
+      console.error('Error restoring user:', error);
+      toast.error(error.response?.data?.message || 'Failed to restore user');
     }
   };
 
@@ -234,7 +290,7 @@ const UserManagement = () => {
       if (response.status) {
         toast.success(`${selectedUserIds.length} user(s) deleted successfully`);
         setSelectedUserIds([]);
-        fetchUsers(currentPage, debouncedSearchTerm);
+        fetchUsers(currentPage, debouncedSearchTerm, deletedFilter);
       } else {
         toast.error(response.message || 'Failed to delete selected users');
       }
@@ -338,7 +394,7 @@ const UserManagement = () => {
         toast.success(`User ${modalMode === 'add' ? 'created' : 'updated'} successfully!`);
         setErrors({});
         setShowModal(false);
-        fetchUsers(currentPage, debouncedSearchTerm);
+        fetchUsers(currentPage, debouncedSearchTerm, deletedFilter);
       } else {
         toast.error(response.message || `Failed to ${modalMode === 'add' ? 'create' : 'update'} user`);
       }
@@ -412,8 +468,8 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="flex justify-between items-center">
+      {/* Search Bar and Filters */}
+      <div className="flex justify-between items-center gap-4">
         <div className="relative w-72">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
           <input
@@ -427,6 +483,78 @@ const UserManagement = () => {
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
           />
         </div>
+        
+        {/* Deleted Filter */}
+        <div className="relative" ref={deletedDropdownRef}>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Deleted</label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowDeletedDropdown(!showDeletedDropdown)}
+              className="w-32 px-3 py-2 text-left border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 flex items-center justify-between"
+            >
+              <span className="capitalize">{deletedFilter === 'with' ? 'With' : deletedFilter === 'only' ? 'Only' : 'Without'}</span>
+              <svg 
+                className={`w-4 h-4 text-gray-400 transition-transform ${showDeletedDropdown ? 'rotate-180' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {/* Dropdown Options */}
+            {showDeletedDropdown && (
+              <div className="absolute right-0 mt-1 w-32 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                <div className="py-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeletedFilter('with');
+                      setCurrentPage(1);
+                      setShowDeletedDropdown(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center ${
+                      deletedFilter === 'with' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    <span className="mr-2 w-4 text-center">{deletedFilter === 'with' ? '✓' : '○'}</span>
+                    With
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeletedFilter('without');
+                      setCurrentPage(1);
+                      setShowDeletedDropdown(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center ${
+                      deletedFilter === 'without' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    <span className="mr-2 w-4 text-center">{deletedFilter === 'without' ? '✓' : '○'}</span>
+                    Without
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeletedFilter('only');
+                      setCurrentPage(1);
+                      setShowDeletedDropdown(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center ${
+                      deletedFilter === 'only' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    <span className="mr-2 w-4 text-center">{deletedFilter === 'only' ? '✓' : '○'}</span>
+                    Only
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* User Table */}
@@ -436,12 +564,14 @@ const UserManagement = () => {
             users={users}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onRestore={handleRestore}
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
             selectedUserIds={selectedUserIds}
             onToggleSelect={handleToggleSelectUser}
             onToggleSelectAll={handleToggleSelectAll}
+            showHardDelete={deletedFilter === 'only'}
           />
         ) : (
           <div className="p-8 text-center">

@@ -671,6 +671,7 @@ export const userAPI = {
       per_page: params.per_page || 10,
       page: params.page || 1,
       search: params.search || '',
+      deleted: params.deleted || 'without',
       sort_by: params.sort_by || 'created_at',
       sort_order: params.sort_order || 'desc',
     });
@@ -705,6 +706,18 @@ export const userAPI = {
   // Delete user
   deleteUser: async (id) => {
     const response = await apiClient.delete(`/client/admin/users/${id}`);
+    return response.data;
+  },
+
+  // Hard delete (permanently delete) user
+  forceDeleteUser: async (id) => {
+    const response = await apiClient.delete(`/client/admin/users/${id}/force`);
+    return response.data;
+  },
+
+  // Restore deleted user
+  restoreUser: async (id) => {
+    const response = await apiClient.post(`/client/admin/users/${id}/restore`);
     return response.data;
   },
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // Avatar Component
@@ -205,6 +205,7 @@ const Table = ({
   users,
   onEdit,
   onDelete,
+  onRestore,
   currentPage,
   totalPages,
   onPageChange,
@@ -212,6 +213,7 @@ const Table = ({
   onToggleSelect = () => {},
   onToggleSelectAll = () => {},
   enableSelection = true,
+  showHardDelete = false,
 }) => {
   const navigate = useNavigate();
   const headerCheckboxRef = useRef(null);
@@ -339,19 +341,36 @@ const Table = ({
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-1">
-                    <button
-                      onClick={() => handleEdit(user)}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium transition-colors flex items-center"
-                    >
-                      <Edit size={12} className="mr-1" />
-                      Edit
-                    </button>
+                    {user.status === 'active' && (
+                      <button
+                        onClick={() => handleEdit(user)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium transition-colors flex items-center"
+                      >
+                        <Edit size={12} className="mr-1" />
+                        Edit
+                      </button>
+                    )}
+                    {user.status === 'inactive' && onRestore && (
+                      <button
+                        onClick={() => onRestore(user)}
+                        className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs font-medium transition-colors flex items-center"
+                        title="Restore user"
+                      >
+                        <RotateCcw size={12} className="mr-1" />
+                        Restore
+                      </button>
+                    )}
                     <button
                       onClick={() => onDelete(user)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs font-medium transition-colors flex items-center"
+                      className={`${
+                        showHardDelete || user.status === 'inactive'
+                          ? 'bg-red-700 hover:bg-red-800'
+                          : 'bg-red-500 hover:bg-red-600'
+                      } text-white px-2 py-1 rounded text-xs font-medium transition-colors flex items-center`}
+                      title={showHardDelete || user.status === 'inactive' ? 'Permanently delete from database' : 'Delete user'}
                     >
                       <Trash2 size={12} className="mr-1" />
-                      Delete
+                      {showHardDelete || user.status === 'inactive' ? 'Hard Delete' : 'Delete'}
                     </button>
                   </div>
                 </td>

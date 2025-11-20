@@ -335,7 +335,7 @@ const DRFView = () => {
           <section className="bg-purple-50 rounded-lg p-4">
             <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
               <MapPin className="text-purple-600" size={20} />
-              Institution & Address
+              Institution & Correspondence Address
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
@@ -356,7 +356,7 @@ const DRFView = () => {
                 )}
               </div>
               <div className="md:col-span-2">
-                <label className="text-sm font-bold text-gray-700">Address</label>
+                <label className="text-sm font-bold text-gray-700">Correspondence</label>
                 {isEditing ? (
                   <textarea
                     name="address"
@@ -418,11 +418,11 @@ const DRFView = () => {
           <section className="bg-amber-50 rounded-lg p-4">
             <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
               <Award className="text-amber-600" size={20} />
-              Conference & Areas of Interest
+              Other Details
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="text-sm font-bold text-gray-700">Conference Activities</label>
+                <label className="text-sm font-bold text-gray-700">Presenting Conference ?</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -460,13 +460,13 @@ const DRFView = () => {
                 {isEditing ? (
                   <textarea
                     name="areas"
-                    value={formData.areas || ''}
+                    value={formData.areas_of_interest || ''}
                     onChange={handleChange}
                     rows={4}
                     className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 ) : (
-                  <p className="text-gray-900 whitespace-pre-wrap">{drf.areas || '-'}</p>
+                  <p className="text-gray-900 whitespace-pre-wrap">{drf.areas_of_interest || '-'}</p>
                 )}
               </div>
               {drf.area_special && (
@@ -476,7 +476,7 @@ const DRFView = () => {
                 </div>
               )}
               <div>
-                <label className="text-sm font-bold text-gray-700">Experience</label>
+                <label className="text-sm font-bold text-gray-700">Teaching Experience</label>
                 {isEditing ? (
                   <input
                     type="text"

@@ -78,7 +78,7 @@ const PPFView = () => {
         <div className="space-y-8">
           {/* Paper Info */}
           <section className="bg-blue-50 rounded-lg p-4">
-            <h4 className="text-lg font-semibold text-gray-900 mb-3">Paper Information</h4>
+            <h4 className="text-lg font-semibold text-gray-900 mb-3">Presentation Details</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700">Title</label>

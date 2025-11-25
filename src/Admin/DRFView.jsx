@@ -191,7 +191,7 @@ const DRFView = () => {
                 )}
               </div>
               <div>
-                <label className="text-sm font-bold text-gray-700">Member Status</label>
+                <label className="text-sm font-bold text-gray-700">AINET Member ?</label>
                 {isEditing ? (
                   <select
                     name="member"
@@ -422,7 +422,7 @@ const DRFView = () => {
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="text-sm font-bold text-gray-700">Presenting Conference ?</label>
+                <label className="text-sm font-bold text-gray-700">Presenting at Conference ?</label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -433,6 +433,29 @@ const DRFView = () => {
                   />
                 ) : (
                   <p className="text-gray-900">{drf.conference || '-'}</p>
+                )}
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-bold text-gray-700">Presentation Type(s)</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="types"
+                    value={formData.types || ''}
+                    onChange={handleChange}
+                    placeholder="e.g., Paper, Poster, Workshop, Virtual Presentation"
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">
+                    {drf.types 
+                      ? (Array.isArray(drf.types) 
+                          ? drf.types.join(', ') 
+                          : (typeof drf.types === 'string' 
+                              ? drf.types.split(',').map(s => s.trim()).filter(s => s).join(', ')
+                              : drf.types))
+                      : '-'}
+                  </p>
                 )}
               </div>
               <div>
@@ -456,10 +479,48 @@ const DRFView = () => {
                 )}
               </div>
               <div className="md:col-span-2">
+                <label className="text-sm font-bold text-gray-700">Area(s) of Work</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="areas"
+                    value={formData.areas || ''}
+                    onChange={handleChange}
+                    placeholder="e.g., Primary, Secondary, Other"
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">
+                    {drf.areas 
+                      ? (Array.isArray(drf.areas) 
+                          ? drf.areas.join(', ') 
+                          : (typeof drf.areas === 'string' 
+                              ? drf.areas.split(',').map(s => s.trim()).filter(s => s).join(', ')
+                              : drf.areas))
+                      : '-'}
+                  </p>
+                )}
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-bold text-gray-700">Other (Work Area Specification)</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="other"
+                    value={formData.other || ''}
+                    onChange={handleChange}
+                    placeholder="Specify other work area"
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                ) : (
+                  <p className="text-gray-900">{drf.other || '-'}</p>
+                )}
+              </div>
+              <div className="md:col-span-2">
                 <label className="text-sm font-bold text-gray-700">Areas of Interest</label>
                 {isEditing ? (
                   <textarea
-                    name="areas"
+                    name="areas_of_interest"
                     value={formData.areas_of_interest || ''}
                     onChange={handleChange}
                     rows={4}

@@ -158,6 +158,17 @@ const MembershipManagement = () => {
   const normalizeMembershipData = (membership) => {
     if (!membership) return {};
     
+    // Normalize gender value to match dropdown options (capitalize first letter)
+    const normalizeGender = (gender) => {
+      if (!gender) return null;
+      const genderStr = String(gender).toLowerCase();
+      if (genderStr === 'male') return 'Male';
+      if (genderStr === 'female') return 'Female';
+      if (genderStr === 'other') return 'Other';
+      // If already capitalized or different format, capitalize first letter
+      return genderStr.charAt(0).toUpperCase() + genderStr.slice(1);
+    };
+    
     // Normalize field names to ensure consistency
     return {
       ...membership,
@@ -170,7 +181,7 @@ const MembershipManagement = () => {
       name: membership.name || null,
       first_name: membership.first_name || null,
       last_name: membership.last_name || null,
-      gender: membership.gender || null,
+      gender: normalizeGender(membership.gender),
       age_groups: membership.age_groups || null,
       email: membership.email || null,
       mobile: membership.mobile || null,
@@ -363,6 +374,51 @@ const MembershipManagement = () => {
       month: 'short',
       day: 'numeric',
     });
+  };
+
+  // Calculate membership status for table display
+  const getMembershipStatus = (membership) => {
+    if (!membership) return { status: 'inactive', label: 'Inactive' };
+
+    // Check if member is blocked (status = 0)
+    const isBlocked = membership.status === 0 || membership.status === '0' || membership.status === false;
+    if (isBlocked) {
+      return { status: 'disabled', label: 'Disabled' };
+    }
+
+    // Check if member has membership ID
+    if (!membership.m_id) {
+      return { status: 'inactive', label: 'Inactive' };
+    }
+
+    // Calculate expiry date: member_date + addMonths
+    const memberDate = membership.member_date 
+      ? new Date(membership.member_date) 
+      : (membership.created_at ? new Date(membership.created_at) : null);
+    
+    if (!memberDate) {
+      return { status: 'inactive', label: 'Inactive' };
+    }
+
+    const addMonths = membership.addMonths ?? membership.add_months ?? 12;
+    
+    // Calculate expiry date
+    const expiryDate = new Date(memberDate);
+    expiryDate.setMonth(expiryDate.getMonth() + addMonths);
+    
+    // Get the last day of the expiry month
+    const lastDayOfMonth = new Date(expiryDate.getFullYear(), expiryDate.getMonth() + 1, 0).getDate();
+    expiryDate.setDate(lastDayOfMonth);
+    expiryDate.setHours(memberDate.getHours(), memberDate.getMinutes(), memberDate.getSeconds());
+    
+    // Check if membership is still valid
+    const now = new Date();
+    const isValid = now <= expiryDate;
+    
+    return {
+      status: isValid ? 'active' : 'inactive',
+      label: isValid ? 'Active' : 'Inactive'
+    };
   };
 
   const membershipValidityText = useMemo(() => {
@@ -782,7 +838,7 @@ const MembershipManagement = () => {
                         Plan
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        State
+                        Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Created
@@ -818,9 +874,12 @@ const MembershipManagement = () => {
                             {membership.m_id || membership.id}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
+                            <button
+                              onClick={() => handleViewDetails(membership)}
+                              className="text-sm font-medium text-teal-600 hover:text-teal-700 hover:underline cursor-pointer transition-colors"
+                            >
                               {membership.name || `${membership.first_name || ''} ${membership.last_name || ''}`.trim() || '-'}
-                            </div>
+                            </button>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center text-sm text-gray-500">
@@ -859,10 +918,20 @@ const MembershipManagement = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center text-sm text-gray-500">
-                              <MapPin size={14} className="mr-2 text-gray-400" />
-                              {membership.state || '-'}
-                            </div>
+                            {(() => {
+                              const membershipStatus = getMembershipStatus(membership);
+                              return (
+                                <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                  membershipStatus.status === 'active'
+                                    ? 'bg-green-100 text-green-800'
+                                    : membershipStatus.status === 'disabled'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {membershipStatus.label}
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {formatDate(membership.created_at)}
@@ -1473,7 +1542,7 @@ const MembershipManagement = () => {
                       )}
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Member Date</label>
+                      <label className="text-xs font-bold text-gray-700 uppercase tracking-wide block mb-1">Membership Renewal Date</label>
                       {isEditing ? (
                         <input
                           type="date"

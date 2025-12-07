@@ -502,15 +502,6 @@ const PPFManagement = () => {
                     {getSortIcon('created_at')}
                   </div>
                 </th>
-                <th
-                  onClick={() => handleSort('updated_at')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                >
-                  <div className="flex items-center gap-2">
-                    Updated
-                    {getSortIcon('updated_at')}
-                  </div>
-                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -568,12 +559,6 @@ const PPFManagement = () => {
                     <div className="flex items-center gap-1">
                       <Calendar size={12} className="text-gray-400" />
                       {formatDate(ppf.created_at)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Calendar size={12} className="text-gray-400" />
-                      {formatDate(ppf.updated_at)}
                     </div>
                   </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm font-medium">

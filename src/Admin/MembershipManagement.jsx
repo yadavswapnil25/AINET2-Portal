@@ -1266,12 +1266,13 @@ const MembershipManagement = () => {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                         >
                           <option value="">Select Age Group</option>
-                          <option value="18-25">18-25</option>
-                          <option value="26-35">26-35</option>
-                          <option value="36-45">36-45</option>
-                          <option value="46-55">46-55</option>
-                          <option value="56-65">56-65</option>
-                          <option value="66+">66+</option>
+                          <option value="up to 25">up to 25</option>
+                          <option value="26-30">26-30</option>
+                          <option value="31-35">31-35</option>
+                          <option value="36-40">36-40</option>
+                          <option value="41-45">41-45</option>
+                          <option value="46-50">46-50</option>
+                          <option value="Over 50">Over 50</option>
                         </select>
                       ) : (
                         <p className="text-sm text-gray-900">{viewDetails.age_groups || '-'}</p>

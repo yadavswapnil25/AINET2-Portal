@@ -245,7 +245,7 @@ const DRFView = () => {
                     <option value="36-40">36-40</option>
                     <option value="41-45">41-45</option>
                     <option value="46-50">46-50</option>
-                    <option value="over 50">over 50</option>
+                    <option value="Over 50">Over 50</option>
                   </select>
                 ) : (
                   <p className="text-gray-900">{drf.age || '-'}</p>

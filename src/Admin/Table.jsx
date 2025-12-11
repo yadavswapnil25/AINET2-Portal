@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Edit, Trash2, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { Edit, Trash2, ChevronLeft, ChevronRight, RotateCcw, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // Avatar Component
@@ -206,6 +206,7 @@ const Table = ({
   onEdit,
   onDelete,
   onRestore,
+  onLoginAs,
   currentPage,
   totalPages,
   onPageChange,
@@ -342,13 +343,25 @@ const Table = ({
                 <td className="px-6 py-3 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-1">
                     {user.status === 'active' && (
-                      <button
-                        onClick={() => handleEdit(user)}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium transition-colors flex items-center"
-                      >
-                        <Edit size={12} className="mr-1" />
-                        Edit
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleEdit(user)}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium transition-colors flex items-center"
+                        >
+                          <Edit size={12} className="mr-1" />
+                          Edit
+                        </button>
+                        {onLoginAs && (
+                          <button
+                            onClick={() => onLoginAs(user)}
+                            className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs font-medium transition-colors flex items-center"
+                            title="Login as this user in AINET2-Web"
+                          >
+                            <LogIn size={12} className="mr-1" />
+                            Login
+                          </button>
+                        )}
+                      </>
                     )}
                     {user.status === 'inactive' && onRestore && (
                       <button

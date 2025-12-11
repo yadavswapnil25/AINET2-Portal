@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { Search, Plus, RotateCcw } from 'lucide-react';
 import { userAPI } from '../utils/api';
+import { webAppUrl } from '../utils/constants';
 import Table from './Table';
 import UserModal from './UserModal';
 import { useDebounce } from '../utils/useDebounce';
@@ -430,6 +431,30 @@ const UserManagement = () => {
     setCurrentPage(page);
   };
 
+  const handleLoginAsUser = async (user) => {
+    if (!window.confirm(`Are you sure you want to login as "${user.name}" in AINET2-Web?`)) {
+      return;
+    }
+
+    try {
+      const response = await userAPI.loginAsUser(user.id);
+      
+      if (response.status && response.data?.token) {
+        const token = response.data.token;
+        // Open AINET2-Web in a new tab with the token in the URL
+        // Portal is at admin.theainet.net, Website is at theainet.net
+        const loginUrl = `${webAppUrl}/login?token=${encodeURIComponent(token)}&autoLogin=true`;
+        window.open(loginUrl, '_blank');
+        toast.success(`Opening login for ${user.name}...`);
+      } else {
+        toast.error(response.message || 'Failed to generate login token');
+      }
+    } catch (error) {
+      console.error('Error logging in as user:', error);
+      toast.error(error.response?.data?.message || 'Failed to login as user');
+    }
+  };
+
   if (isLoading && users.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -565,6 +590,7 @@ const UserManagement = () => {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onRestore={handleRestore}
+            onLoginAs={handleLoginAsUser}
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}

@@ -726,6 +726,12 @@ export const userAPI = {
     const response = await apiClient.delete(`/client/admin/users/bulk`, { data: { ids } });
     return response.data;
   },
+
+  // Login as user (generate token for direct login to AINET2-Web)
+  loginAsUser: async (id) => {
+    const response = await apiClient.post(`/client/admin/users/${id}/login-as`);
+    return response.data;
+  },
 };
 
 // Public website API methods

@@ -391,11 +391,9 @@ const MembershipManagement = () => {
       return { status: 'inactive', label: 'Inactive' };
     }
 
-    // Calculate expiry date: member_date + addMonths
-    const memberDate = membership.member_date 
-      ? new Date(membership.member_date) 
-      : (membership.created_at ? new Date(membership.created_at) : null);
-    
+    // Calculate expiry date: member_date + addMonths (requires member_date)
+    const memberDate = membership.member_date ? new Date(membership.member_date) : null;
+
     if (!memberDate) {
       return { status: 'inactive', label: 'Inactive' };
     }
@@ -432,7 +430,7 @@ const MembershipManagement = () => {
       viewDetails.validity_months ??
       viewDetails.duration_months;
 
-    const { formattedDate, months } = calculateMembershipValidity(viewDetails.created_at, monthsValue);
+    const { formattedDate, months } = calculateMembershipValidity(viewDetails.member_date, monthsValue);
     if (!formattedDate) return '-';
 
     if (months !== null && Number.isFinite(months) && months > 0) {
@@ -461,10 +459,9 @@ const MembershipManagement = () => {
       return { status: 'inactive', label: 'Inactive', expiryDate: null };
     }
 
-    // Calculate expiry date: member_date + addMonths
-    // Use member_date if available, otherwise fallback to created_at
-    const memberDate = data.member_date ? new Date(data.member_date) : (data.created_at ? new Date(data.created_at) : null);
-    
+    // Calculate expiry date: member_date + addMonths (requires member_date)
+    const memberDate = data.member_date ? new Date(data.member_date) : null;
+
     if (!memberDate) {
       return { status: 'inactive', label: 'Inactive', expiryDate: null };
     }
@@ -841,7 +838,7 @@ const MembershipManagement = () => {
                         Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Created
+                        Member Date
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
@@ -934,7 +931,7 @@ const MembershipManagement = () => {
                             })()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(membership.created_at)}
+                            {formatDate(membership.member_date)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <div className="flex gap-2">

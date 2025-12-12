@@ -376,6 +376,16 @@ const MembershipManagement = () => {
     });
   };
 
+  // Normalize any date value to an ISO yyyy-mm-dd string for <input type="date">
+  const formatDateInput = (dateValue) => {
+    if (!dateValue) return '';
+    const dateObj = new Date(dateValue);
+    if (Number.isNaN(dateObj.getTime())) return '';
+    // Adjust to local date without time offset affecting the day
+    const tzAdjusted = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000);
+    return tzAdjusted.toISOString().split('T')[0];
+  };
+
   // Calculate membership status for table display
   const getMembershipStatus = (membership) => {
     if (!membership) return { status: 'inactive', label: 'Inactive' };
@@ -1544,7 +1554,7 @@ const MembershipManagement = () => {
                         <input
                           type="date"
                           name="member_date"
-                          value={formData.member_date ? (typeof formData.member_date === 'string' ? formData.member_date.split(' ')[0] : new Date(formData.member_date).toISOString().split('T')[0]) : ''}
+                          value={formatDateInput(formData.member_date)}
                           onChange={handleChange}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                         />

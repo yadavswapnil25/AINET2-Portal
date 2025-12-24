@@ -149,14 +149,19 @@ const SponsorManagement = () => {
       }
       let res;
       if (editing) {
-        res = await sponsorAPI.updateSponsor(editing.id, {
+        // Only include logoFile if a new file is selected
+        const updateData = {
           name: form.name,
-          logoFile,
           subtitle: form.subtitle,
           link_url: form.link_url,
           is_active: form.is_active,
           sort_order: Number(form.sort_order) || 0,
-        });
+        };
+        // Only add logoFile if a new file is selected
+        if (logoFile) {
+          updateData.logoFile = logoFile;
+        }
+        res = await sponsorAPI.updateSponsor(editing.id, updateData);
       } else {
         res = await sponsorAPI.createSponsor({
           name: form.name,

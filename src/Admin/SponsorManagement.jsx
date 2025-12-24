@@ -143,10 +143,6 @@ const SponsorManagement = () => {
         toast.error("Name is required");
         return;
       }
-      if (!editing && !logoFile) {
-        toast.error("Logo is required");
-        return;
-      }
       let res;
       if (editing) {
         // Only include logoFile if a new file is selected

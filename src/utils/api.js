@@ -503,6 +503,67 @@ export const partnerAPI = {
   },
 };
 
+// Sponsor API methods
+export const sponsorAPI = {
+  getSponsors: async (params = {}) => {
+    const queryParams = new URLSearchParams({
+      per_page: params.per_page || 10,
+      page: params.page || 1,
+      search: params.search || '',
+      sort_by: params.sort_by || 'sort_order',
+      sort_order: params.sort_order || 'asc',
+    });
+    if (params.is_active !== undefined && params.is_active !== null) {
+      queryParams.append('is_active', params.is_active);
+    }
+    const response = await apiClient.get(`/client/admin/sponsors?${queryParams}`);
+    return response.data;
+  },
+
+  getSponsor: async (id) => {
+    const response = await apiClient.get(`/client/admin/sponsors/${id}`);
+    return response.data;
+  },
+
+  createSponsor: async ({ name, logoFile, subtitle, link_url, is_active = true, sort_order = 0 }) => {
+    const formData = new FormData();
+    formData.append('name', name || '');
+    if (logoFile) formData.append('logo', logoFile);
+    if (subtitle) formData.append('subtitle', subtitle);
+    if (link_url) formData.append('link_url', link_url);
+    formData.append('is_active', is_active ? '1' : '0');
+    formData.append('sort_order', String(sort_order));
+    const response = await apiClient.post(`/client/admin/sponsors`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  updateSponsor: async (id, { name, logoFile, subtitle, link_url, is_active, sort_order }) => {
+    const formData = new FormData();
+    if (name !== undefined) formData.append('name', name);
+    if (logoFile) formData.append('logo', logoFile);
+    if (subtitle !== undefined) formData.append('subtitle', subtitle);
+    if (link_url !== undefined) formData.append('link_url', link_url);
+    if (is_active !== undefined) formData.append('is_active', is_active ? '1' : '0');
+    if (sort_order !== undefined) formData.append('sort_order', String(sort_order));
+    const response = await apiClient.put(`/client/admin/sponsors/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  deleteSponsor: async (id) => {
+    const response = await apiClient.delete(`/client/admin/sponsors/${id}`);
+    return response.data;
+  },
+
+  bulkDeleteSponsors: async (ids = []) => {
+    const response = await apiClient.delete(`/client/admin/sponsors/bulk`, { data: { ids } });
+    return response.data;
+  },
+};
+
 // Gallery API methods
 export const galleryAPI = {
   getGalleries: async (params = {}) => {
@@ -759,6 +820,15 @@ export const websiteAPI = {
     return response.data;
   },
 
+  getSponsors: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.limit) {
+      queryParams.append('limit', params.limit);
+    }
+    const response = await axios.get(`${baseUrl}/client/sponsors${queryParams.toString() ? '?' + queryParams : ''}`);
+    return response.data;
+  },
+
   getEvents: async (params = {}) => {
     const queryParams = new URLSearchParams();
     if (params.limit) {
@@ -841,6 +911,21 @@ export const highlightAPI = {
 
   deleteHighlight: async (id) => {
     const response = await apiClient.delete(`/client/admin/highlights/${id}`);
+    return response.data;
+  },
+};
+
+// Feedback API methods
+export const feedbackAPI = {
+  getFeedbacks: async (params = {}) => {
+    const queryParams = new URLSearchParams({
+      per_page: params.per_page || 10,
+      page: params.page || 1,
+      search: params.search || '',
+      sort_by: params.sort_by || 'created_at',
+      sort_order: params.sort_order || 'desc',
+    });
+    const response = await apiClient.get(`/client/admin/feedback?${queryParams}`);
     return response.data;
   },
 };

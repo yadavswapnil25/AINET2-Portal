@@ -15,7 +15,7 @@ import {
   Save,
   X,
 } from 'lucide-react';
-import { drfAPI } from '../utils/api';
+import { drfAPI, sponsorAPI } from '../utils/api';
 import { formatTitleCase } from '../utils/formatters';
 
 const DRFView = () => {
@@ -27,6 +27,8 @@ const DRFView = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+  const [sponsors, setSponsors] = useState([]);
+  const [isLoadingSponsors, setIsLoadingSponsors] = useState(false);
 
   useEffect(() => {
     const fetchDRF = async () => {
@@ -45,8 +47,28 @@ const DRFView = () => {
       }
     };
 
+    const fetchSponsors = async () => {
+      try {
+        setIsLoadingSponsors(true);
+        const response = await sponsorAPI.getSponsors({
+          per_page: 100,
+          is_active: 1,
+          sort_by: 'sort_order',
+          sort_order: 'asc',
+        });
+        if (response.status && response.data.sponsors) {
+          setSponsors(response.data.sponsors);
+        }
+      } catch (error) {
+        console.error('Error fetching sponsors:', error);
+      } finally {
+        setIsLoadingSponsors(false);
+      }
+    };
+
     if (id) {
       fetchDRF();
+      fetchSponsors();
     }
   }, [id]);
 
@@ -82,6 +104,13 @@ const DRFView = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const getSponsorNameById = (id) => {
+    if (!id || !Array.isArray(sponsors)) return '';
+    const sponsorId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const sponsor = sponsors.find((s) => s.id === sponsorId);
+    return sponsor ? sponsor.name : '';
   };
 
   if (isLoading) {
@@ -528,6 +557,30 @@ const DRFView = () => {
                   />
                 ) : (
                   <p className="text-gray-900 whitespace-pre-wrap">{drf.areas_of_interest || '-'}</p>
+                )}
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-bold text-gray-700">Sponsor</label>
+                {isEditing ? (
+                  <select
+                    name="sponsor_id"
+                    value={formData.sponsor_id || ''}
+                    onChange={handleChange}
+                    disabled={isLoadingSponsors}
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="">No Sponsor</option>
+                    {sponsors.map((sponsor) => (
+                      <option key={sponsor.id} value={sponsor.id}>
+                        {sponsor.name}
+                        {sponsor.subtitle ? ` - ${sponsor.subtitle}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="text-gray-900">
+                    {getSponsorNameById(drf.sponsor_id) || 'No Sponsor'}
+                  </p>
                 )}
               </div>
               {drf.area_special && (

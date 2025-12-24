@@ -29,9 +29,12 @@ import './index.css';
 import Highlights from './Admin/Home/Highlights';
 import Events from './Admin/Home/Events';
 import Partners from './Admin/Home/Partners';
+import Sponsors from './Admin/Home/Sponsors';
 import Gallery from './Admin/Home/Gallery';
 import Archives from './Admin/Home/Archives';
 import News from './Admin/About/News';
+import SponsorManagement from './Admin/SponsorManagement';
+import FeedbackManagement from './Admin/FeedbackManagement';
 
 function App() {
   return (
@@ -79,6 +82,7 @@ function App() {
               <Route path="/admin/highlights" element={<Highlights/>} />
               <Route path="/admin/home/events" element={<Events/>} />
               <Route path="/admin/home/partners" element={<Partners/>} />
+              <Route path="/admin/home/sponsors" element={<Sponsors/>} />
               <Route path="/admin/gallery" element={<Gallery/>} />
               <Route path="/admin/archives" element={<Archives/>} />
               <Route path="/admin/news" element={<News/>} />
@@ -95,9 +99,11 @@ function App() {
               <Route path="banners" element={<BannerManagement />} />
               <Route path="events" element={<EventManagement />} />
               <Route path="partners" element={<PartnerManagement />} />
+              <Route path="sponsors" element={<SponsorManagement />} />
               <Route path="galleries" element={<GalleryManagement />} />
               <Route path="news-management" element={<NewsManagement />} />
               <Route path="newsletters" element={<NewsletterManagement />} />
+              <Route path="feedback" element={<FeedbackManagement />} />
               <Route index element={<Navigate to="dashboard" replace />} />
             </Route>
             <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />

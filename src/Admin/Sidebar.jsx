@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
+import {
   Users, 
   Settings, 
   LayoutDashboard,
@@ -19,6 +19,7 @@ import {
   Image,
   Mail,
   Sparkles,
+  MessageSquare,
 } from 'lucide-react';
 import { IoHome } from "react-icons/io5";
 import { useAuth } from '../context/AuthContext';
@@ -87,9 +88,11 @@ const Sidebar = ({ isOpen, onClose }) => {
      { icon: Sparkles, label: 'Highlights', path: '/admin/highlights' },
      { icon: Calendar, label: 'Events', path: '/admin/events' },
      { icon: Users, label: 'Partners', path: '/admin/partners' },
+     { icon: Users, label: 'Sponsors', path: '/admin/sponsors' },
      { icon: Image, label: 'Gallery', path: '/admin/galleries' },
      { icon: Mail, label: 'Newsletters', path: '/admin/newsletters' },
      { icon: Newspaper, label: 'News', path: '/admin/news-management' },
+     { icon: MessageSquare, label: 'Feedback', path: '/admin/feedback' },
   ];
 
   // Auto-open dropdown if current path belongs to a subItem

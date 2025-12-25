@@ -422,7 +422,7 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+      {/* <div className="bg-white rounded-lg shadow p-4 sm:p-6">
         <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
         <div className="space-y-2 sm:space-y-3">
           {users.slice(0, 5).map((user, index) => (
@@ -444,10 +444,10 @@ const Dashboard = () => {
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+      {/* <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
           <input
@@ -458,10 +458,10 @@ const Dashboard = () => {
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
           />
         </div>
-      </div>
+      </div> */}
 
       {/* User Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* <div className="bg-white rounded-lg shadow overflow-hidden">
         {currentUsers.length > 0 ? (
           <Table
             users={currentUsers}
@@ -477,17 +477,17 @@ const Dashboard = () => {
             <p className="text-gray-500">No users found matching your search.</p>
           </div>
         )}
-      </div>
+      </div> */}
 
       {/* User Modal */}
-      <UserModal
+      {/* <UserModal
         showModal={showModal}
         setShowModal={setShowModal}
         modalMode={modalMode}
         formData={formData}
         setFormData={setFormData}
         handleSubmit={handleSubmit}
-      />
+      /> */}
     </div>
   );
 };

@@ -20,6 +20,7 @@ import {
   Mail,
   Sparkles,
   MessageSquare,
+  Globe,
 } from 'lucide-react';
 import { IoHome } from "react-icons/io5";
 import { useAuth } from '../context/AuthContext';
@@ -79,17 +80,28 @@ const Sidebar = ({ isOpen, onClose }) => {
     // },
     //      { icon: Newspaper, label: 'Publications', path: '/admin/publications' },
     //  { icon: GraduationCap, label: 'FDLectures', path: '/admin/fdlectures' },
-    //  { icon: Calendar, label: 'Conferences', path: '/admin/conferences' },
     //  { icon: Video, label: 'Webinars', path: '/admin/webinars' },
-     { icon: FileText, label: 'PPFs', path: '/admin/ppfs' },
-     { icon: ClipboardList, label: 'DRFs', path: '/admin/drfs' },
+     { 
+       icon: Calendar, 
+       label: 'Conference', 
+       subItems: [
+         { label: 'PPFs', path: '/admin/ppfs' },
+         { label: 'DRFs', path: '/admin/drfs' },
+       ] 
+     },
      { icon: UserCog, label: 'Memberships', path: '/admin/memberships' },
-     { icon: IoHome, label: 'Banners', path: '/admin/banners' },
-     { icon: Sparkles, label: 'Highlights', path: '/admin/highlights' },
+     { 
+       icon: Globe, 
+       label: 'Website', 
+       subItems: [
+         { label: 'Banners', path: '/admin/banners' },
+         { label: 'Highlights', path: '/admin/highlights' },
+         { label: 'Partners', path: '/admin/partners' },
+         { label: 'Gallery', path: '/admin/galleries' },
+       ] 
+     },
      { icon: Calendar, label: 'Events', path: '/admin/events' },
-     { icon: Users, label: 'Partners', path: '/admin/partners' },
      { icon: Users, label: 'Sponsors', path: '/admin/sponsors' },
-     { icon: Image, label: 'Gallery', path: '/admin/galleries' },
      { icon: Mail, label: 'Newsletters', path: '/admin/newsletters' },
      { icon: Newspaper, label: 'News', path: '/admin/news-management' },
      { icon: MessageSquare, label: 'Feedback', path: '/admin/feedback' },

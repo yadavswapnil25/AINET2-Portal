@@ -98,6 +98,7 @@ const Sidebar = ({ isOpen, onClose }) => {
          { label: 'Highlights', path: '/admin/highlights' },
          { label: 'Partners', path: '/admin/partners' },
          { label: 'Gallery', path: '/admin/galleries' },
+         { label: 'Webinars', path: '/admin/webinars' },
        ] 
      },
      { icon: Calendar, label: 'Events', path: '/admin/events' },

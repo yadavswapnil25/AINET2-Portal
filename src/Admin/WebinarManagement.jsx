@@ -32,7 +32,12 @@ const WebinarManagement = () => {
         registrationLink: '',
         topic: '',
         guestSpeaker: '',
-        topicDescription: ''
+        topicDescription: '',
+        isLive: false,
+        streamType: '',
+        streamUrl: '',
+        embedCode: '',
+        streamId: ''
       },
       previousWebinars: [],
       webinarSettings: {
@@ -297,6 +302,99 @@ const WebinarManagement = () => {
             />
             {errors.upcomingWebinar?.topicDescription && (
               <p className="text-red-500 text-sm mt-1">{errors.upcomingWebinar.topicDescription.message}</p>
+            )}
+          </div>
+
+          {/* Live Streaming Section */}
+          <div className="border-t border-gray-200 pt-6 mt-6">
+            <h4 className="text-md font-semibold text-gray-900 mb-4 flex items-center">
+              <Video className="w-5 h-5 mr-2 text-red-600" />
+              Live Streaming Settings
+            </h4>
+
+            {/* Enable Live Stream */}
+            <div className="mb-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  {...register("upcomingWebinar.isLive")}
+                  className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                />
+                <span className="ml-2 text-sm text-gray-700">Enable live streaming on website</span>
+              </label>
+            </div>
+
+            {/* Stream Type */}
+            {watch("upcomingWebinar.isLive") && (
+              <>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Stream Platform
+                  </label>
+                  <select
+                    {...register("upcomingWebinar.streamType")}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select platform</option>
+                    <option value="youtube">YouTube Live</option>
+                    <option value="facebook">Facebook Live</option>
+                    <option value="zoom">Zoom</option>
+                    <option value="embed">Custom Embed Code</option>
+                    <option value="custom">Custom Stream URL</option>
+                  </select>
+                </div>
+
+                {/* Stream URL */}
+                {watch("upcomingWebinar.streamType") && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Stream URL
+                    </label>
+                    <input
+                      type="url"
+                      {...register("upcomingWebinar.streamUrl")}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="https://youtube.com/watch?v=... or https://facebook.com/..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      For YouTube/Facebook: Paste the full video URL
+                    </p>
+                  </div>
+                )}
+
+                {/* Stream ID (for YouTube/Facebook) */}
+                {(watch("upcomingWebinar.streamType") === 'youtube' || watch("upcomingWebinar.streamType") === 'facebook') && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Video ID (Optional - extracted from URL if not provided)
+                    </label>
+                    <input
+                      type="text"
+                      {...register("upcomingWebinar.streamId")}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Video ID (e.g., dQw4w9WgXcQ)"
+                    />
+                  </div>
+                )}
+
+                {/* Embed Code */}
+                {(watch("upcomingWebinar.streamType") === 'embed' || watch("upcomingWebinar.streamType") === 'zoom') && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Embed Code
+                    </label>
+                    <textarea
+                      {...register("upcomingWebinar.embedCode")}
+                      rows={6}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                      placeholder="Paste the iframe embed code here..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Paste the complete iframe code from your streaming platform
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

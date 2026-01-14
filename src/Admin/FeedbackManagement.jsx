@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import {
   Search,
@@ -17,6 +18,7 @@ import { feedbackAPI } from '../utils/api';
 import { useDebounce } from '../utils/useDebounce';
 
 const FeedbackManagement = () => {
+  const navigate = useNavigate();
   const [feedbacks, setFeedbacks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -275,6 +277,9 @@ const FeedbackManagement = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   DRF ID
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -313,6 +318,15 @@ const FeedbackManagement = () => {
                     ) : (
                       '-'
                     )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => navigate(`/admin/feedback/${feedback.id}`)}
+                      className="text-teal-600 hover:text-teal-900 font-medium"
+                      title="View feedback"
+                    >
+                      View
+                    </button>
                   </td>
                 </tr>
               ))}

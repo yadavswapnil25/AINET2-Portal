@@ -928,6 +928,10 @@ export const feedbackAPI = {
     const response = await apiClient.get(`/client/admin/feedback?${queryParams}`);
     return response.data;
   },
+  getFeedback: async (id) => {
+    const response = await apiClient.get(`/client/admin/feedback/${id}`);
+    return response.data;
+  },
 };
 
 export default apiClient;

@@ -35,6 +35,7 @@ import Archives from './Admin/Home/Archives';
 import News from './Admin/About/News';
 import SponsorManagement from './Admin/SponsorManagement';
 import FeedbackManagement from './Admin/FeedbackManagement';
+import FeedbackView from './Admin/FeedbackView';
 
 function App() {
   return (
@@ -104,6 +105,7 @@ function App() {
               <Route path="news-management" element={<NewsManagement />} />
               <Route path="newsletters" element={<NewsletterManagement />} />
               <Route path="feedback" element={<FeedbackManagement />} />
+              <Route path="feedback/:id" element={<FeedbackView />} />
               <Route index element={<Navigate to="dashboard" replace />} />
             </Route>
             <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />

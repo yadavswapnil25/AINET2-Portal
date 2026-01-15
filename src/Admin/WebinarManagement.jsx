@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
+import { toast } from 'react-hot-toast';
 import { 
   Video, 
   Calendar, 
@@ -14,10 +15,14 @@ import {
   Edit3, 
   Save 
 } from 'lucide-react';
+import { eventAPI } from '../utils/api';
 
 const WebinarManagement = () => {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [existingWebinar, setExistingWebinar] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
@@ -68,29 +73,127 @@ const WebinarManagement = () => {
     removePreviousWebinarField(index);
   };
 
-  const onSubmit = (data) => {
-    console.log('Form data:', data);
-    // Save to localStorage for now
-    localStorage.setItem('webinarData', JSON.stringify(data));
-    alert('Webinar data saved successfully!');
-  };
-
-  // Load saved data on component mount
+  // Fetch existing webinar on component mount
   useEffect(() => {
-    const savedData = localStorage.getItem('webinarData');
-    if (savedData) {
+    const fetchWebinar = async () => {
       try {
-        const parsedData = JSON.parse(savedData);
-        Object.keys(parsedData).forEach(key => {
-          if (parsedData[key]) {
-            setValue(key, parsedData[key]);
-          }
+        setIsLoading(true);
+        const response = await eventAPI.getEvents({
+          event_type: 'webinar',
+          per_page: 1,
+          sort_by: 'sort_order',
+          sort_order: 'asc'
         });
+        
+        if (response.status && response.data.events && response.data.events.length > 0) {
+          const webinar = response.data.events[0];
+          setExistingWebinar(webinar);
+          
+          // Populate form with existing data
+          const upcomingData = {
+            bannerImage: webinar.banner_image || '',
+            title: webinar.title || '',
+            startDate: webinar.starts_at ? webinar.starts_at.substring(0, 10) : (webinar.event_date ? webinar.event_date.substring(0, 10) : ''),
+            startTime: webinar.starts_at ? webinar.starts_at.substring(11, 16) : '',
+            endDate: webinar.ends_at ? webinar.ends_at.substring(0, 10) : (webinar.event_date_end ? webinar.event_date_end.substring(0, 10) : ''),
+            endTime: webinar.ends_at ? webinar.ends_at.substring(11, 16) : '',
+            location: webinar.location || '',
+            registrationLink: webinar.link_url || '',
+            topic: '',
+            guestSpeaker: webinar.guest_speaker || '',
+            topicDescription: webinar.topic_description || '',
+            isLive: webinar.is_live || false,
+            streamType: webinar.stream_type || '',
+            streamUrl: webinar.stream_url || '',
+            embedCode: webinar.embed_code || '',
+            streamId: webinar.stream_id || ''
+          };
+          
+          setValue('upcomingWebinar', upcomingData);
+        }
       } catch (error) {
-        console.error('Error loading saved data:', error);
+        console.error('Error fetching webinar:', error);
+        toast.error('Failed to load webinar data');
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
+
+    fetchWebinar();
   }, [setValue]);
+
+  const onSubmit = async (data) => {
+    try {
+      setIsSaving(true);
+      
+      const upcoming = data.upcomingWebinar;
+      
+      // Combine date and time for starts_at and ends_at
+      const startsAt = upcoming.startDate && upcoming.startTime 
+        ? `${upcoming.startDate} ${upcoming.startTime}:00`
+        : (upcoming.startDate ? `${upcoming.startDate} 00:00:00` : null);
+      
+      const endsAt = upcoming.endDate && upcoming.endTime
+        ? `${upcoming.endDate} ${upcoming.endTime}:00`
+        : (upcoming.endDate ? `${upcoming.endDate} 23:59:59` : null);
+
+      const eventData = {
+        title: upcoming.title,
+        location: upcoming.location,
+        event_date: upcoming.startDate || null,
+        event_date_end: upcoming.endDate || null,
+        description: upcoming.topicDescription || '',
+        link_url: upcoming.registrationLink || '',
+        event_type: 'webinar',
+        is_active: true,
+        sort_order: 0,
+        starts_at: startsAt,
+        ends_at: endsAt,
+        // Live streaming fields
+        is_live: upcoming.isLive || false,
+        stream_type: upcoming.streamType || null,
+        stream_url: upcoming.streamUrl || null,
+        embed_code: upcoming.embedCode || null,
+        stream_id: upcoming.streamId || null,
+        banner_image: upcoming.bannerImage || null,
+        guest_speaker: upcoming.guestSpeaker || null,
+        topic_description: upcoming.topicDescription || null,
+      };
+
+      let response;
+      if (existingWebinar) {
+        // Update existing webinar
+        response = await eventAPI.updateEvent(existingWebinar.id, eventData);
+      } else {
+        // Create new webinar
+        response = await eventAPI.createEvent(eventData);
+        if (response.status && response.data.event) {
+          setExistingWebinar(response.data.event);
+        }
+      }
+
+      if (response.status) {
+        toast.success('Webinar saved successfully!');
+        // Reload the webinar data
+        const fetchResponse = await eventAPI.getEvents({
+          event_type: 'webinar',
+          per_page: 1,
+          sort_by: 'sort_order',
+          sort_order: 'asc'
+        });
+        if (fetchResponse.status && fetchResponse.data.events && fetchResponse.data.events.length > 0) {
+          setExistingWebinar(fetchResponse.data.events[0]);
+        }
+      } else {
+        toast.error('Failed to save webinar');
+      }
+    } catch (error) {
+      console.error('Error saving webinar:', error);
+      toast.error('Failed to save webinar: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const renderUpcomingWebinarForm = () => (
     <div className="space-y-6">
@@ -639,6 +742,16 @@ const WebinarManagement = () => {
     </div>
   );
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Loading webinar data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -680,10 +793,11 @@ const WebinarManagement = () => {
           {!isPreviewMode && (
             <button
               onClick={handleSubmit(onSubmit)}
-              className="flex items-center justify-center px-4 sm:px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors w-full sm:w-auto text-sm sm:text-base"
+              disabled={isSaving || isLoading}
+              className="flex items-center justify-center px-4 sm:px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors w-full sm:w-auto text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4 mr-2" />
-              Save & Publish
+              {isSaving ? 'Saving...' : 'Save & Publish'}
             </button>
           )}
         </div>

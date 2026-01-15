@@ -397,7 +397,7 @@ export const eventAPI = {
     return response.data;
   },
 
-  createEvent: async ({ title, location, event_date, event_date_end, description, link_url, event_type, is_active = true, sort_order = 0, starts_at, ends_at }) => {
+  createEvent: async ({ title, location, event_date, event_date_end, description, link_url, event_type, is_active = true, sort_order = 0, starts_at, ends_at, is_live, stream_type, stream_url, embed_code, stream_id, banner_image, guest_speaker, topic_description }) => {
     const response = await apiClient.post(`/client/admin/events`, {
       title,
       location,
@@ -410,11 +410,19 @@ export const eventAPI = {
       sort_order,
       starts_at,
       ends_at,
+      is_live,
+      stream_type,
+      stream_url,
+      embed_code,
+      stream_id,
+      banner_image,
+      guest_speaker,
+      topic_description,
     });
     return response.data;
   },
 
-  updateEvent: async (id, { title, location, event_date, event_date_end, description, link_url, event_type, is_active, sort_order, starts_at, ends_at }) => {
+  updateEvent: async (id, { title, location, event_date, event_date_end, description, link_url, event_type, is_active, sort_order, starts_at, ends_at, is_live, stream_type, stream_url, embed_code, stream_id, banner_image, guest_speaker, topic_description }) => {
     const response = await apiClient.put(`/client/admin/events/${id}`, {
       title,
       location,
@@ -427,6 +435,14 @@ export const eventAPI = {
       sort_order,
       starts_at,
       ends_at,
+      is_live,
+      stream_type,
+      stream_url,
+      embed_code,
+      stream_id,
+      banner_image,
+      guest_speaker,
+      topic_description,
     });
     return response.data;
   },

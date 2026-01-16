@@ -905,20 +905,22 @@ export const highlightAPI = {
     return response.data;
   },
 
-  createHighlight: async ({ heading, subheading, is_active = true, sort_order = 0 }) => {
+  createHighlight: async ({ heading, subheading, link_url = null, is_active = true, sort_order = 0 }) => {
     const response = await apiClient.post(`/client/admin/highlights`, {
       heading,
       subheading,
+      link_url,
       is_active,
       sort_order,
     });
     return response.data;
   },
 
-  updateHighlight: async (id, { heading, subheading, is_active, sort_order }) => {
+  updateHighlight: async (id, { heading, subheading, link_url, is_active, sort_order }) => {
     const response = await apiClient.put(`/client/admin/highlights/${id}`, {
       heading,
       subheading,
+      link_url,
       is_active,
       sort_order,
     });

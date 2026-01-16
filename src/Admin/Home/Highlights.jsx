@@ -49,15 +49,21 @@ const Highlights = () => {
 
   const handleSave = async () => {
     try {
+      // Ensure link_url is sent as null if empty
+      const payload = {
+        ...form,
+        link_url: form.link_url && form.link_url.trim() !== '' ? form.link_url.trim() : null
+      };
+      
       if (editing) {
-        const response = await highlightAPI.updateHighlight(editing.id, form);
+        const response = await highlightAPI.updateHighlight(editing.id, payload);
         if (response.status) {
           toast.success('Highlight updated successfully');
           fetchHighlights();
           setIsModalOpen(false);
         }
       } else {
-        const response = await highlightAPI.createHighlight(form);
+        const response = await highlightAPI.createHighlight(payload);
         if (response.status) {
           toast.success('Highlight created successfully');
           fetchHighlights();

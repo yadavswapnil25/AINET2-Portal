@@ -8,7 +8,7 @@ const Highlights = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ heading: 'HIGHLIGHTS', subheading: '', is_active: true, sort_order: 0 });
+  const [form, setForm] = useState({ heading: 'HIGHLIGHTS', subheading: '', link_url: '', is_active: true, sort_order: 0 });
 
   useEffect(() => {
     fetchHighlights();
@@ -31,7 +31,7 @@ const Highlights = () => {
 
   const handleCreate = () => {
     setEditing(null);
-    setForm({ heading: 'HIGHLIGHTS', subheading: '', is_active: true, sort_order: 0 });
+    setForm({ heading: 'HIGHLIGHTS', subheading: '', link_url: '', is_active: true, sort_order: 0 });
     setIsModalOpen(true);
   };
 
@@ -40,6 +40,7 @@ const Highlights = () => {
     setForm({
       heading: highlight.heading || 'HIGHLIGHTS',
       subheading: highlight.subheading || '',
+      link_url: highlight.link_url || '',
       is_active: highlight.is_active !== undefined ? highlight.is_active : true,
       sort_order: highlight.sort_order || 0,
     });
@@ -116,6 +117,9 @@ const Highlights = () => {
               </span>
               <p className="text-gray-800 font-semibold text-sm mb-1">{activeHighlight.heading}</p>
               <p className="text-gray-700 text-base">{activeHighlight.subheading}</p>
+              {activeHighlight.link_url && (
+                <p className="text-blue-600 text-sm mt-1">🔗 {activeHighlight.link_url}</p>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -155,6 +159,9 @@ const Highlights = () => {
                       )}
                     </div>
                     <p className="text-sm text-gray-600">{highlight.subheading}</p>
+                    {highlight.link_url && (
+                      <p className="text-blue-600 text-xs mt-1">🔗 {highlight.link_url}</p>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -213,6 +220,19 @@ const Highlights = () => {
                   className="w-full border border-gray-300 rounded-md p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 mt-1"
                   rows="3"
                 />
+              </label>
+
+              {/* Link URL Field */}
+              <label className="block mb-3">
+                <span className="text-sm font-medium text-gray-700">Link URL (Optional)</span>
+                <input
+                  type="url"
+                  value={form.link_url}
+                  onChange={(e) => setForm({ ...form, link_url: e.target.value })}
+                  placeholder="https://example.com or /events/webinar"
+                  className="w-full border border-gray-300 rounded-md p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">Clicking the highlight will redirect to this URL</p>
               </label>
 
               {/* Active Status */}

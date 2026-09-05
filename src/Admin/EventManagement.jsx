@@ -284,9 +284,7 @@ const EventManagement = () => {
     const [hours, minutes] = String(value).split(':');
     const hour = Number(hours);
     if (Number.isNaN(hour)) return '';
-    const suffix = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-    return `${hour12}:${minutes ?? '00'} ${suffix}`;
+    return `${String(hour).padStart(2, '0')}:${minutes ?? '00'}`;
   };
 
   const formatTimeRange = (start, end) => {
@@ -528,12 +526,12 @@ const EventManagement = () => {
                 <div>
                   <label className="block text-sm font-medium mb-1">Event Start Time</label>
                   <input type="time" value={form.event_time} onChange={(e)=>setForm(f=>({ ...f, event_time: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-                  <p className="mt-1 text-xs text-gray-500">Shown on the website as {formatTime(form.event_time) || 'e.g. 6:30 PM'}. Leave blank if there is no set time.</p>
+                  <p className="mt-1 text-xs text-gray-500">Shown on the website as {formatTime(form.event_time) || 'e.g. 18:30'}. Leave blank if there is no set time.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Event End Time</label>
                   <input type="time" value={form.event_time_end} onChange={(e)=>setForm(f=>({ ...f, event_time_end: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-                  <p className="mt-1 text-xs text-gray-500">Optional. Set both to show a range, e.g. 6:30 PM - 8:00 PM.</p>
+                  <p className="mt-1 text-xs text-gray-500">Optional. Set both to show a range, e.g. 18:30 - 20:00.</p>
                 </div>
               </div>
               <div>

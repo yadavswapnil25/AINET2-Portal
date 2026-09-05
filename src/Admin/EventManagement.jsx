@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { 
-  Plus, Trash2, MapPin, Calendar, Link2, CheckCircle2, XCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown
+  Plus, Trash2, MapPin, Calendar, Clock, Link2, CheckCircle2, XCircle, ChevronLeft, ChevronRight, ChevronUp, ChevronDown
 } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import { eventAPI } from '../utils/api';
@@ -31,6 +31,8 @@ const EventManagement = () => {
     location: '', 
     event_date: '', 
     event_date_end: '', 
+    event_time: '', 
+    event_time_end: '', 
     description: '', 
     link_url: '', 
     event_type: '', 
@@ -76,6 +78,8 @@ const EventManagement = () => {
       location: '', 
       event_date: '', 
       event_date_end: '', 
+      event_time: '', 
+      event_time_end: '', 
       description: '', 
       link_url: '', 
       event_type: '', 
@@ -94,6 +98,8 @@ const EventManagement = () => {
       location: event.location || '',
       event_date: event.event_date ? event.event_date.substring(0, 10) : '',
       event_date_end: event.event_date_end ? event.event_date_end.substring(0, 10) : '',
+      event_time: event.event_time ? event.event_time.substring(0, 5) : '',
+      event_time_end: event.event_time_end ? event.event_time_end.substring(0, 5) : '',
       description: event.description || '',
       link_url: event.link_url || '',
       event_type: event.event_type || '',
@@ -118,6 +124,8 @@ const EventManagement = () => {
           location: form.location,
           event_date: form.event_date || undefined,
           event_date_end: form.event_date_end || undefined,
+          event_time: form.event_time,
+          event_time_end: form.event_time_end,
           description: form.description,
           link_url: form.link_url,
           event_type: form.event_type,
@@ -132,6 +140,8 @@ const EventManagement = () => {
           location: form.location,
           event_date: form.event_date || undefined,
           event_date_end: form.event_date_end || undefined,
+          event_time: form.event_time,
+          event_time_end: form.event_time_end,
           description: form.description,
           link_url: form.link_url,
           event_type: form.event_type,
@@ -269,6 +279,24 @@ const EventManagement = () => {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
+  const formatTime = (value) => {
+    if (!value) return '';
+    const [hours, minutes] = String(value).split(':');
+    const hour = Number(hours);
+    if (Number.isNaN(hour)) return '';
+    const suffix = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+    return `${hour12}:${minutes ?? '00'} ${suffix}`;
+  };
+
+  const formatTimeRange = (start, end) => {
+    const startDisplay = formatTime(start);
+    if (!startDisplay) return '';
+    const endDisplay = formatTime(end);
+    if (!endDisplay || endDisplay === startDisplay) return startDisplay;
+    return `${startDisplay} - ${endDisplay}`;
+  };
+
   const formatDateRange = (start, end) => {
     if (!start) return 'TBA';
     if (!end || start === end) return formatDate(start);
@@ -382,6 +410,12 @@ const EventManagement = () => {
                       <Calendar size={14} className="text-gray-400" />
                       {formatDateRange(e.event_date, e.event_date_end)}
                     </div>
+                    {formatTimeRange(e.event_time, e.event_time_end) && (
+                      <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                        <Clock size={12} className="text-gray-400" />
+                        {formatTimeRange(e.event_time, e.event_time_end)}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-3 text-sm text-gray-700">
                     {e.event_type ? (
@@ -490,6 +524,18 @@ const EventManagement = () => {
                   <input type="date" value={form.event_date_end} onChange={(e)=>setForm(f=>({ ...f, event_date_end: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Event Start Time</label>
+                  <input type="time" value={form.event_time} onChange={(e)=>setForm(f=>({ ...f, event_time: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                  <p className="mt-1 text-xs text-gray-500">Shown on the website as {formatTime(form.event_time) || 'e.g. 6:30 PM'}. Leave blank if there is no set time.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Event End Time</label>
+                  <input type="time" value={form.event_time_end} onChange={(e)=>setForm(f=>({ ...f, event_time_end: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                  <p className="mt-1 text-xs text-gray-500">Optional. Set both to show a range, e.g. 6:30 PM - 8:00 PM.</p>
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Description</label>
                 <textarea value={form.description} onChange={(e)=>setForm(f=>({ ...f, description: e.target.value }))} rows={3} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
@@ -525,11 +571,13 @@ const EventManagement = () => {
                 <div>
                   <label className="block text-sm font-medium mb-1">Starts At</label>
                   <input type="datetime-local" value={form.starts_at} onChange={(e)=>setForm(f=>({ ...f, starts_at: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                  <p className="mt-1 text-xs text-gray-500">Publishing window, not the event time - when this starts showing on the website.</p>
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Ends At</label>
                 <input type="datetime-local" value={form.ends_at} onChange={(e)=>setForm(f=>({ ...f, ends_at: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                <p className="mt-1 text-xs text-gray-500">Publishing window, not the event time - when this stops showing on the website.</p>
               </div>
             </div>
             <div className="p-4 border-t flex justify-end gap-2">
